@@ -1,0 +1,145 @@
+name: Test and publish Elixir library
+
+on:
+  workflow_call:
+    inputs:
+      publish-to-hex:
+        description: 'True to publish package to Hex package manager.'
+        required: false
+        default: true
+        type: boolean
+      replace-mix-version:
+        description: 'True to replace the version placeholder (`0.0.1-development`) in `mix.exs`'
+        required: false
+        default: true
+        type: boolean
+    secrets:
+      HEX_API_KEY:
+
+jobs:
+  test:
+    name: Test
+    # Intentionally using 20.04 and not 22.04 because we need to support OTP `22 - 23`
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - elixir-version: "1.14"
+            otp-version: "25.x"
+          - elixir-version: "1.14"
+            otp-version: "24.x"
+          - elixir-version: "1.14"
+            otp-version: "23.x"
+          - elixir-version: "1.13"
+            otp-version: "24.x"
+          - elixir-version: "1.13"
+            otp-version: "23.x"
+          - elixir-version: "1.13"
+            otp-version: "22.x"
+          - elixir-version: "1.12"
+            otp-version: "24.x"
+          - elixir-version: "1.12"
+            otp-version: "23.x"
+          - elixir-version: "1.12"
+            otp-version: "22.x"
+          - elixir-version: "1.11"
+            otp-version: "23.x"
+          - elixir-version: "1.11"
+            otp-version: "22.x"
+          - elixir-version: "1.11"
+            otp-version: "21.x"
+          - elixir-version: "1.10"
+            otp-version: "22.x"
+          - elixir-version: "1.10"
+            otp-version: "21.x"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1.15
+        with:
+          elixir-version: ${{ matrix.elixir-version }}
+          otp-version: ${{ matrix.otp-version }}
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - run: mix deps.get
+
+      - run: mix test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1.15
+        with:
+          elixir-version: "1.14"
+          otp-version: "25.x"
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - run: mix deps.get
+
+      - run: mix format --check-formatted
+
+  publish:
+    name: Publish to Hex
+    timeout-minutes: 5
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: ${{ github.ref }}
+    needs:
+      - test
+      - lint
+
+    if: |
+      inputs.publish-to-hex
+      && github.event_name == 'release'
+      && startsWith(github.event.release.name, 'v')
+      && startsWith(github.event.release.tag_name, 'v')
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1.15
+        with:
+          elixir-version: "1.14"
+          otp-version: "25.x"
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - run: mix deps.get
+
+      - name: Set version in mix.exs
+        if: inputs.replace-mix-version
+        run: |
+          VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//')
+          sed -i 's/0.0.1-development/${VERSION}/g' mix.exs
+
+      - name: Publish
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: mix hex.publish --yes
