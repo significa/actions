@@ -133,7 +133,7 @@ jobs:
         if: inputs.replace-mix-version
         run: |
           VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//')
-          sed -i 's/0.0.1-development/${VERSION}/g' mix.exs
+          sed -i "s/0.0.1-development/${VERSION}/g" mix.exs
 
       - name: Publish
         env:
