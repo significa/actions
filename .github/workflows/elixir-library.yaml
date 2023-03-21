@@ -132,6 +132,7 @@ jobs:
     needs:
       - test
       - lint
+      - build
 
     if: |
       inputs.publish-to-hex
