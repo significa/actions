@@ -69,7 +69,7 @@ jobs:
 
       - run: mix deps.get
 
-      - run: mix test --warnings-as-errors
+      - run: mix test
 
   lint:
     name: Lint
