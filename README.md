@@ -2,7 +2,9 @@
 
 Reusable GitHub actions workflows.
 
-## Test and publish elixir library
+## Available actions
+
+**Test and publish elixir library:**
 
 [`.github/workflows/elixir-library.yaml`](./.github/workflows/elixir-library.yaml)
 
@@ -12,7 +14,7 @@ versions.
 Usage:
 
 ```yaml
-  test-and-publish:
+test-and-publish:
   name: Test and publish
   uses: significa/actions/.github/workflows/elixir-library.yaml@main
   secrets:
