@@ -7,7 +7,7 @@ on:
         description: Node versions as a JSON string.
         type: string
         required: false
-        default: '[16, 18, 19, 20]'
+        default: '[16, 18, 19]'
 
       install_command:
         description: Install command.
@@ -69,6 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
+      fail-fast: true
       matrix:
         node_version: ${{ fromJSON(inputs.node_versions) }}
 
@@ -84,9 +85,11 @@ jobs:
         run: ${{ inputs.install_command }}
 
       - name: Test
+        if: inputs.test_command
         run: ${{ inputs.test_command }}
 
       - name: Build
+        if: inputs.build_command
         run: ${{ inputs.build_command }}
 
   publish:
