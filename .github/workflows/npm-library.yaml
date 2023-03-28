@@ -1,0 +1,132 @@
+name: NPM Library
+
+on:
+  workflow_call:
+    inputs:
+      node_versions:
+        description: Node versions as a JSON string.
+        type: string
+        required: false
+        default: '[16, 18, 19, 20]'
+
+      install_command:
+        description: Install command.
+        type: string
+        required: false
+        default: npm ci --prefer-offline --no-audit --no-fund
+
+      lint_command:
+        description: Lint command.
+        type: string
+        required: false
+        default: npm run lint
+      
+      build_command:
+        description: Build command.
+        type: string
+        required: false
+        default: npm run build
+      
+      test_command:
+        description: Test command.
+        type: string
+        required: false
+        default: npm run test
+
+      npm_scope:
+        description: "NPM scope (containing the '@' symbol, ex: @example)."
+        type: string
+        required: false
+        default: "@significa"
+      
+      publish-to-github-registry:
+        description: True to publish the GitHub NPM registry.
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Lint
+        run: ${{ inputs.lint_command }}
+
+  build:
+    name: Test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node_version: ${{ fromJSON(inputs.node_versions) }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Test
+        run: ${{ inputs.test_command }}
+
+      - name: Build
+        run: ${{ inputs.build_command }}
+
+  publish:
+    name: Publish package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - lint
+      - build
+    if: |
+      inputs.publish-to-github-registry
+      && github.event_name == 'release'
+      && !github.event.release.isDraft
+      && startsWith(github.event.release.name, 'v')
+      && startsWith(github.event.release.tag_name, 'v')
+    concurrency:
+      group: publish-npm-package
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: ${{ inputs.npm_scope }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Set package.json version
+        run: npm version --no-git-tag-version "${{ github.ref_name }}"
+
+      - name: Build
+        run: ${{ inputs.build_command }}
+
+      - name: Publish to GitHub registry
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
