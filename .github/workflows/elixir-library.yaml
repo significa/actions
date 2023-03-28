@@ -13,6 +13,11 @@ on:
         required: false
         default: true
         type: boolean
+      mix-compile-opts:
+        description: 'mix compile options'
+        required: false
+        default: '--warning-as-errors'
+        type: string
     secrets:
       HEX_API_KEY:
         required: true
@@ -118,7 +123,7 @@ jobs:
 
       - run: mix deps.get
 
-      - run: mix compile --warnings-as-errors
+      - run: mix compile ${{ inputs.mix-compile-opts }}
         env:
           MIX_ENV: prod
 
@@ -138,6 +143,7 @@ jobs:
     if: |
       inputs.publish-to-hex
       && github.event_name == 'release'
+      && !github.event.release.isDraft
       && startsWith(github.event.release.name, 'v')
       && startsWith(github.event.release.tag_name, 'v')
 
