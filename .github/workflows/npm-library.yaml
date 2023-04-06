@@ -78,7 +78,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
-          cache: 'npm'
+          cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
-          cache: 'npm'
+          cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -140,7 +140,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
-          cache: 'npm'
+          cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -155,12 +155,13 @@ jobs:
 
       - name: Publish to GitHub registry
         if: inputs.publish_to_npm_registry
-        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/"
+        run: npm publish "--${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_github_registry
-        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
+        run: |
+          npm publish "--${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
