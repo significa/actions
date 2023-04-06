@@ -155,13 +155,24 @@ jobs:
 
       - name: Publish to GitHub registry
         if: inputs.publish_to_npm_registry
-        run: npm publish "--${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/"
+        run: |
+          cat > ~/.npmrc <<EOF
+          ${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/
+          //npm.pkg.github.com/:_authToken=${NPM_TOKEN}
+          EOF
+
+          npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_github_registry
         run: |
-          npm publish "--${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
+          cat > ~/.npmrc <<EOF
+          ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
+          //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+          EOF
+
+          npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
