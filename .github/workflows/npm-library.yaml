@@ -38,6 +38,14 @@ on:
         type: string
         required: false
         default: "@significa"
+
+      install_registry_url:
+        description: >-
+          The NPM registry URL to install scoped packages from.
+          Scope specified in the input `npm_scope`.
+        required: false
+        default: "https://registry.npmjs.org/"
+        type: string
       
       publish_to_github_registry:
         description: True to publish the GitHub NPM registry.
@@ -71,6 +79,8 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -94,6 +104,8 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
           cache: 'npm'
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -129,6 +141,8 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
