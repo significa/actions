@@ -129,7 +129,6 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-          scope: ${{ inputs.npm_scope }}
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
