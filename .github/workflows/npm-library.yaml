@@ -153,14 +153,14 @@ jobs:
       - name: Build
         run: ${{ inputs.build_command }}
 
-      - name: Publish to the NPM registry
-        if: inputs.publish_to_github_registry
-        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
       - name: Publish to GitHub registry
         if: inputs.publish_to_npm_registry
         run: npm publish "--@${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to the NPM registry
+        if: inputs.publish_to_github_registry
+        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
