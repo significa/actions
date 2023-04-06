@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       node_versions:
-        description: Node versions as a JSON string.
+        description: JSON array (as string) of Node versions to test.
         type: string
         required: false
         default: '[16, 18, 19]'
@@ -39,11 +39,25 @@ on:
         required: false
         default: "@significa"
       
-      publish-to-github-registry:
+      publish_to_github_registry:
         description: True to publish the GitHub NPM registry.
         required: false
         default: true
         type: boolean
+
+      publish_to_npm_registry:
+        description: True to publish the NPM (npmjs.com) registry.
+        required: false
+        default: false
+        type: boolean
+
+    secrets:
+      NPM_TOKEN:
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
@@ -64,7 +78,7 @@ jobs:
       - name: Lint
         run: ${{ inputs.lint_command }}
 
-  build:
+  test:
     name: Test and build
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -98,15 +112,13 @@ jobs:
     timeout-minutes: 10
     needs:
       - lint
-      - build
+      - test
     if: |
-      inputs.publish-to-github-registry
+      (inputs.publish_to_github_registry || inputs.publish_to_npm_registry)
       && github.event_name == 'release'
       && !github.event.release.isDraft
       && startsWith(github.event.release.name, 'v')
       && startsWith(github.event.release.tag_name, 'v')
-    concurrency:
-      group: publish-npm-library
     permissions:
       contents: read
       packages: write
@@ -117,7 +129,6 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-          registry-url: 'https://npm.pkg.github.com'
           scope: ${{ inputs.npm_scope }}
 
       - name: Install dependencies
@@ -129,7 +140,14 @@ jobs:
       - name: Build
         run: ${{ inputs.build_command }}
 
-      - name: Publish to GitHub registry
-        run: npm publish
+      - name: Publish to the NPM registry
+        if: inputs.publish_to_github_registry
+        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Publish to GitHub registry
+        if: inputs.publish_to_npm_registry
+        run: npm publish "--@${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
