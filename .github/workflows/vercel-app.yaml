@@ -3,16 +3,6 @@ name: Vercel app
 on:
   workflow_call:
     inputs:
-      vercel_org_id:
-        description: Verce's organization id.
-        required: true
-        type: string
-
-      vercel_project_id:
-        description: Verce's project id.
-        required: true
-        type: string
-
       install_command:
         description: Install command.
         type: string
@@ -54,6 +44,10 @@ on:
     secrets:
       VERCEL_TOKEN:
         required: true
+      VERCEL_ORG_ID:
+        required: true
+      VERCEL_PROJECT_ID:
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -94,8 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      VERCEL_ORG_ID: ${{ inputs.vercel_org_id }}
-      VERCEL_PROJECT_ID: ${{ inputs.VERCEL_PROJECT_ID }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     needs:
       - test-and-lint
     steps:
