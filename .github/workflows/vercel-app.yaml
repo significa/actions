@@ -63,10 +63,8 @@ jobs:
       
       - name: Ensure configuration files exist
         run: |
-          ls
           [ ! -f "./.nvmrc" ] && echo "Required .nvmrc file does not exist" && exit 1
           [ ! -f "./vercel.json" ] && echo "Required vercel.json file does not exist" && exit 1
-          echo "Success"
 
       - uses: actions/setup-node@v3
         with:
@@ -74,6 +72,10 @@ jobs:
           cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
+
+      - run: |
+          cat ./.npmrc
+          cat ~/.npmrc
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
