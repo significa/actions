@@ -128,7 +128,6 @@ jobs:
     if: |
       (inputs.publish_to_github_registry || inputs.publish_to_npm_registry)
       && github.event_name == 'release'
-      && !github.event.release.isDraft
       && startsWith(github.event.release.name, 'v')
       && startsWith(github.event.release.tag_name, 'v')
     permissions:
