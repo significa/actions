@@ -1,0 +1,131 @@
+name: Vercel deploy
+
+on:
+  workflow_call:
+    inputs:
+      vercel_org_id:
+        description: Verce's organization id.
+        required: true
+        type: string
+
+      vercel_project_id:
+        description: Verce's project id.
+        required: true
+        type: string
+
+      install_command:
+        description: Install command.
+        type: string
+        required: false
+        default: npm ci --prefer-offline --no-audit --no-fund
+
+      lint_command:
+        description: Lint command.
+        type: string
+        required: false
+        default: npm run lint
+      
+      test_command:
+        description: Test command.
+        type: string
+        required: false
+        default: npm run test
+
+      npm_scope:
+        description: "NPM scope (containing the '@' symbol, ex: @example)."
+        type: string
+        required: false
+        default: "@significa"
+
+      install_registry_url:
+        description: >-
+          The NPM registry URL to install scoped packages from.
+          Scope specified in the input `npm_scope`.
+        required: false
+        default: "https://npm.pkg.github.com/"
+        type: string
+
+      ref_name_to_vercel_environment:
+        description: A JSON map of the 'github.ref_name' to the vercel environment name.
+        required: false
+        default: '{"develop": "preview", "main": "production"}'
+        type: string
+
+    secrets:
+      VERCEL_TOKEN:
+        required: true
+
+jobs:
+  test-and-lint:
+    name: Test and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Ensure configuration files exist
+        run: |
+          [ ! -f ".nvmrc" ] && echo "Required .nvmrc file does not exist" && exit 1
+          [ ! -f "vercel.json" ] && echo "Required vercel.json file does not exist" && exit 1
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Lint
+        run: ${{ inputs.lint_command }}
+
+      - name: Test
+        if: inputs.test_command
+        run: ${{ inputs.test_command }}
+  
+  build-and-depploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_ORG_ID: ${{ inputs.vercel_org_id }}
+      VERCEL_PROJECT_ID: ${{ inputs.VERCEL_PROJECT_ID }}
+    needs:
+      - test-and-lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information (release)
+        if: |
+          github.event_name == 'release'
+          && startsWith(github.event.release.name, 'v')
+          && startsWith(github.event.release.tag_name, 'v')
+        run: |
+          vercel pull --yes \
+            --environment=production \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Pull Vercel Environment Information
+        if: github.event_name != 'release'
+        run: |
+          vercel pull --yes \
+            --environment=preview \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Build Project Artifacts
+        run: vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}"
