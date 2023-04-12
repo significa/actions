@@ -63,8 +63,10 @@ jobs:
       
       - name: Ensure configuration files exist
         run: |
-          [ ! -f ".nvmrc" ] && echo "Required .nvmrc file does not exist" && exit 1
-          [ ! -f "vercel.json" ] && echo "Required vercel.json file does not exist" && exit 1
+          ls
+          [ ! -f "./.nvmrc" ] && echo "Required .nvmrc file does not exist" && exit 1
+          [ ! -f "./vercel.json" ] && echo "Required vercel.json file does not exist" && exit 1
+          echo "Success"
 
       - uses: actions/setup-node@v3
         with:
