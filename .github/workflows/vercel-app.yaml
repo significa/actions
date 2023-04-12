@@ -1,4 +1,4 @@
-name: Vercel deploy
+name: Vercel app
 
 on:
   workflow_call:
