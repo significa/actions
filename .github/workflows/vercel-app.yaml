@@ -25,14 +25,14 @@ on:
         description: "NPM scope (containing the '@' symbol, ex: @example)."
         type: string
         required: false
-        default: "@significa"
+        default: null
 
       install_registry_url:
         description: >-
           The NPM registry URL to install scoped packages from.
           Scope specified in the input `npm_scope`.
         required: false
-        default: "https://npm.pkg.github.com/"
+        default: null
         type: string
 
       ref_name_to_vercel_environment:
@@ -81,6 +81,7 @@ jobs:
           GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint
+        if: inputs.lint_command
         run: ${{ inputs.lint_command }}
 
       - name: Test
@@ -127,7 +128,9 @@ jobs:
             --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build Project Artifacts
-        run: vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+        run: |
+          vercel build --token="${{ secrets.VERCEL_TOKEN }}" \
+          | tee >(tail -1) | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT"
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
