@@ -75,6 +75,37 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Check checks
+        shell: bash
+        run: |
+          [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
+
+      - name: Custom checks when publishing
+        if: inputs.publish_to_npm_registry || inputs.publish_to_github_registry
+        shell: bash
+        run: |
+          jq -e '.publishConfig | has("${{ inputs.npm_scope }}:registry") | not' package.json \
+          || ( \
+            echo "ERROR: 'publishConfig.${{ inputs.npm_scope }}:registry' should not be defined in 'package.json'" >&2 \
+            && exit 1 \
+          )
+
+      - name: Custom checks when publishing to NPM
+        if: inputs.publish_to_npm_registry
+        shell: bash
+        run: |
+          jq -e '.private != true' package.json \
+          || ( \
+            echo "ERROR: 'package.json' has 'private' set to true, publishing to NPM will fail." >&2 \
+            && exit 1 \
+          )
+
+          jq -e '.publishConfig.access == "public"' package.json \
+          || ( \
+            echo "ERROR: '.publishConfig.access' in 'package.json' must be set to 'public', otherwise publishing to NPM will fail." >&2 \
+            && exit 1 \
+          )
+
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -155,23 +186,19 @@ jobs:
       - name: Publish to GitHub registry
         if: inputs.publish_to_npm_registry
         run: |
-          cat > ~/.npmrc <<EOF
+          cat > ./.npmrc <<EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
           ${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/
-          //npm.pkg.github.com/:_authToken=${NPM_TOKEN}
           EOF
 
           npm publish
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_github_registry
         run: |
-          cat > ~/.npmrc <<EOF
+          cat > ./.npmrc <<EOF
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
           ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
-          //registry.npmjs.org/:_authToken=${NPM_TOKEN}
           EOF
 
           npm publish
-        env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
