@@ -61,12 +61,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Ensure configuration files exist
+      - name: Custom checks to configs
         run: |
-          echo "Checking required files"
-          [ ! -f "./.nvmrc" ] && echo "Required .nvmrc file does not exist" && exit 1
-          [ ! -f "./vercel.json" ] && echo "Required vercel.json file does not exist" && exit 1
-          echo "All OK"
+          [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
+          [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
       - uses: actions/setup-node@v3
         with:
