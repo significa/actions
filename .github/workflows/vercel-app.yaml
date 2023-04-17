@@ -128,9 +128,34 @@ jobs:
       - name: Build Project Artifacts
         run: |
           vercel build --token="${{ secrets.VERCEL_TOKEN }}" \
-          | tee >(tail -1) | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT"
+
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}"
+        id: vercel_deploy
+        shell: bash
+        run: |
+          vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}" \
+          | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
+
+      - name: Create deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "${{ github.ref_name	}}",
+              auto_merge: false,
+              environment: preview,
+              production_environment: false,
+            })
+
+            await octokit.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.id,
+              target_url: "${{ steps.vercel_deploy.outputs.preview_url }}",
+              state: "success",
+            });
