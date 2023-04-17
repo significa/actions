@@ -153,6 +153,7 @@ jobs:
               auto_merge: false,
               environment: 'preview',
               production_environment: false,
+              required_contexts: [],
             })
 
             await github.rest.repos.createDeploymentStatus({
