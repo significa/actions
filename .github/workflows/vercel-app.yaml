@@ -146,9 +146,9 @@ jobs:
             const deployment = await github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: "${{ github.ref_name	}}",
+              ref: '${{ github.ref_name	}}',
               auto_merge: false,
-              environment: preview,
+              environment: 'preview',
               production_environment: false,
             })
 
@@ -156,6 +156,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: deployment.id,
-              target_url: "${{ steps.vercel_deploy.outputs.preview_url }}",
-              state: "success",
+              target_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
+              state: 'success',
             });
