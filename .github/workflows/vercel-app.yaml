@@ -146,7 +146,7 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           script: |
-            const deployment = await github.rest.repos.createDeployment({
+            const response = await github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: '${{ github.event.pull_request.head.ref }}',
@@ -159,7 +159,7 @@ jobs:
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              deployment_id: deployment.id,
+              deployment_id: response.data.id,
               target_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
               state: 'success',
             });
