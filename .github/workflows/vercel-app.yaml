@@ -141,9 +141,6 @@ jobs:
           vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
-      - name: Debugging
-        run: echo '${{ toJson(github.event) }}'
-
       - name: Create deployment
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -152,7 +149,7 @@ jobs:
             const deployment = await github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: '${{ github.event.pull_request.ref.head }}',
+              ref: '${{ github.event.pull_request.head.ref }}',
               auto_merge: false,
               environment: 'preview',
               production_environment: false,
