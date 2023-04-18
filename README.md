@@ -78,6 +78,7 @@ If publishing to NPM `publish_to_npm_registry`, make sure that:
     }
   }
   ```
+- `publishConfig` does not define a registry override for your scope.
 
 ### Build and deploy a Vercel app
 

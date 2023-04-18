@@ -184,7 +184,7 @@ jobs:
         run: ${{ inputs.build_command }}
 
       - name: Publish to GitHub registry
-        if: inputs.publish_to_npm_registry
+        if: inputs.publish_to_github_registry
         run: |
           cat > ./.npmrc <<EOF
           //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
@@ -194,7 +194,7 @@ jobs:
           npm publish
 
       - name: Publish to the NPM registry
-        if: inputs.publish_to_github_registry
+        if: inputs.publish_to_npm_registry
         run: |
           cat > ./.npmrc <<EOF
           //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
