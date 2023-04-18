@@ -161,5 +161,6 @@ jobs:
               repo: context.repo.repo,
               deployment_id: response.data.id,
               target_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
+              environment_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
               state: 'success',
             });
