@@ -96,7 +96,10 @@ ci-cd:
   permissions:
     contents: read
     packages: read
+    deployments: write
   uses: significa/actions/.github/workflows/vercel-app.yaml@main
+  with:
+    npm_scope: '@significa'
   secrets:
     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
