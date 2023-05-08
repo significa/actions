@@ -71,6 +71,9 @@ jobs:
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
+      - name: Delete commited .npmrc
+        run: rm .npmrc
+
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
