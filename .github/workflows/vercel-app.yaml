@@ -152,8 +152,7 @@ jobs:
             --prebuilt \
             --token="${{ secrets.VERCEL_TOKEN }}" \
             --name="${{ github.ref_name }}" \
-          | tee /dev/tty \
-          | sed -e 's/^/preview_url=/;' \ >> "$GITHUB_OUTPUT"
+          | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
       - name: Create deployment
         uses: actions/github-script@v6
