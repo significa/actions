@@ -37,11 +37,21 @@ on:
         default: null
         type: string
 
-      ref_name_to_vercel_environment:
-        description: A JSON map of the 'github.ref_name' to the vercel environment name.
+      staging_domain:
+        description: Staging domain (preview domain for the main branch).
         required: false
-        default: '{"develop": "preview", "main": "production"}'
         type: string
+
+      production_domain:
+        description: Production domain (domain to be applied for the production releases).
+        required: false
+        type: string
+
+      vercel_scope:
+        description: Vercel team scope, required for custom domain aliases.
+        required: false
+        type: string
+        default: significa
 
     secrets:
       VERCEL_TOKEN:
@@ -120,7 +130,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel Environment Information (release)
+      - name: Deploy to vercel
         if: |
           github.event_name == 'release'
           && startsWith(github.event.release.name, 'v')
@@ -130,7 +140,7 @@ jobs:
             --environment=production \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
-      - name: Pull Vercel Environment Information
+      - name: Deploy to vercel
         if: github.event_name != 'release'
         run: |
           vercel pull --yes \
@@ -139,8 +149,8 @@ jobs:
 
       - name: Build Project Artifacts
         run: |
-          vercel build --token="${{ secrets.VERCEL_TOKEN }}" \
-
+          vercel build --yes \
+            --token="${{ secrets.VERCEL_TOKEN }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -153,6 +163,31 @@ jobs:
             --token="${{ secrets.VERCEL_TOKEN }}" \
             --name="${{ github.ref_name }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
+
+      - name: Set deployment alias (staging)
+        if: |
+          inputs.staging_domain
+          && github.event_name != 'pull_request'
+          && ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          vercel alias set \
+            '${{ steps.vercel_deploy.outputs.preview_url }}' \
+            '${{ inputs.staging_domain }}' \
+            --scope="${{ inputs.vercel_scope }}" \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Set deployment alias (production)
+        if: |
+          inputs.production_domain
+          && github.event_name == 'release'
+          && startsWith(github.event.release.name, 'v')
+          && startsWith(github.event.release.tag_name, 'v')
+        run: |
+          vercel alias set \
+            '${{ steps.vercel_deploy.outputs.preview_url }}' \
+            '${{ inputs.production_domain }}' \
+            --scope="${{ inputs.vercel_scope }}" \
+            --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Create deployment
         uses: actions/github-script@v6
