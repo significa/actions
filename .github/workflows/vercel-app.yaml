@@ -167,8 +167,8 @@ jobs:
       - name: Set deployment alias (staging)
         if: |
           inputs.staging_domain
-          && github.event_name != 'pull_request'
-          && ${{ github.ref == 'refs/heads/main' }}
+          && github.event_name == 'push'
+          && github.ref == 'refs/heads/main'
         run: |
           vercel alias set \
             '${{ steps.vercel_deploy.outputs.preview_url }}' \
