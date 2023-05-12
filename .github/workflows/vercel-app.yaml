@@ -146,10 +146,25 @@ jobs:
           vercel pull --yes \
             --environment=preview \
             --token="${{ secrets.VERCEL_TOKEN }}"
-
-      - name: Build Project Artifacts
+            
+      - name: Build Project Artifacts (production)
+        if: |
+          github.event_name == 'release'
+          && startsWith(github.event.release.name, 'v')
+          && startsWith(github.event.release.tag_name, 'v')
         run: |
-          vercel build --yes \
+          vercel build \
+            --yes \
+            --prod \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Project Artifacts (preview)
+        if: github.event_name != 'release'
+        run: |
+          vercel build \
+            --yes \
             --token="${{ secrets.VERCEL_TOKEN }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
