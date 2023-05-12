@@ -130,7 +130,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Deploy to vercel
+      - name: Pull vercel environment (production)
         if: |
           github.event_name == 'release'
           && startsWith(github.event.release.name, 'v')
@@ -140,7 +140,7 @@ jobs:
             --environment=production \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
-      - name: Deploy to vercel
+      - name: Pull vercel environment (preview)
         if: github.event_name != 'release'
         run: |
           vercel pull --yes \
