@@ -165,11 +165,10 @@ jobs:
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
       - name: Set deployment alias (staging)
-        if: |
-          inputs.staging_domain
-          && github.event_name == 'push'
-          && github.ref == 'refs/heads/main'
+        if: inputs.staging_domain && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          echo 'staging_domain=${{inputs.staging_domain}} event_name=${{github.event_name}} ref=${{github.ref}}'
+
           vercel alias set \
             '${{ steps.vercel_deploy.outputs.preview_url }}' \
             '${{ inputs.staging_domain }}' \
