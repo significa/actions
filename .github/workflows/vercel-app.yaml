@@ -196,7 +196,7 @@ jobs:
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
           echo 'staging_domain=${{inputs.staging_domain}}'
-          echo 'event_name=${{github.event_name}}
+          echo 'event_name=${{github.event_name}}'
           echo 'ref=${{github.ref}}'
 
           vercel alias set \
