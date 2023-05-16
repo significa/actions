@@ -37,11 +37,21 @@ on:
         default: null
         type: string
 
-      ref_name_to_vercel_environment:
-        description: A JSON map of the 'github.ref_name' to the vercel environment name.
+      staging_domain:
+        description: Staging domain (preview domain for the main branch).
         required: false
-        default: '{"develop": "preview", "main": "production"}'
         type: string
+
+      production_domain:
+        description: Production domain (domain to be applied for the production releases).
+        required: false
+        type: string
+
+      vercel_scope:
+        description: Vercel team scope, required for custom domain aliases.
+        required: false
+        type: string
+        default: significa
 
     secrets:
       VERCEL_TOKEN:
@@ -52,7 +62,7 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-vercel-app
   cancel-in-progress: false
 
 jobs:
@@ -108,6 +118,13 @@ jobs:
     needs:
       - test-and-lint
     steps:
+      - name: Assert valid release name
+        if: |
+          github.event_name == 'release'
+          && ! (startsWith(github.event.release.name, 'v') && startsWith(github.event.release.tag_name, 'v'))
+        run: |
+          >&2 echo "Releases must be tagged with a semver complient string prefixed with 'v'. Ex: 'v1.2.3'"
+
       - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
@@ -120,41 +137,75 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel Environment Information (release)
-        if: |
-          github.event_name == 'release'
-          && startsWith(github.event.release.name, 'v')
-          && startsWith(github.event.release.tag_name, 'v')
-        run: |
-          vercel pull --yes \
-            --environment=production \
-            --token="${{ secrets.VERCEL_TOKEN }}"
-
-      - name: Pull Vercel Environment Information
-        if: github.event_name != 'release'
-        run: |
-          vercel pull --yes \
-            --environment=preview \
-            --token="${{ secrets.VERCEL_TOKEN }}"
-
-      - name: Build Project Artifacts
-        run: |
-          vercel build --token="${{ secrets.VERCEL_TOKEN }}" \
-
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy Project Artifacts to Vercel
-        id: vercel_deploy
+      - name: Get Vercel CLI options
+        id: vercel_opts
         shell: bash
         run: |
-          vercel deploy --yes \
+         if [[ "$IS_PRODUCTION" == "true" ]]; then
+          echo "Producton"
+          echo "environment=production" >> "$GITHUB_OUTPUT"
+          echo "extra_options=--prod" >> "$GITHUB_OUTPUT"
+         else
+          echo "preview"
+          echo "environment=preview" >> "$GITHUB_OUTPUT"
+          echo "extra_options=" >> "$GITHUB_OUTPUT"
+         fi
+        env:
+          IS_PRODUCTION: ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')}}
+          
+      - name: Deploy to Vercel
+        id: vercel_deploy
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          vercel pull --yes \
+            --environment= ${{ steps.vercel_opts.outputs.environment }} \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+          vercel build \
+            --yes \
+            ${{ steps.vercel_opts.outputs.extra_options }} \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+          vercel deploy \
+            --yes \
+            ${{ steps.vercel_opts.outputs.extra_options }} \
             --prebuilt \
             --token="${{ secrets.VERCEL_TOKEN }}" \
             --name="${{ github.ref_name }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
-      - name: Create deployment
+      - name: Set deployment alias (production)
+        if: |
+          inputs.production_domain
+          && github.event_name == 'release'
+          && startsWith(github.event.release.name, 'v')
+          && startsWith(github.event.release.tag_name, 'v')
+        run: |
+          vercel alias set \
+          '${{ steps.vercel_deploy.outputs.preview_url }}' \
+          '${{ inputs.staging_domain }}' \
+          --scope="${{ inputs.vercel_scope }}" \
+          --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Set deployment alias (preview)
+        if: |
+          inputs.staging_domain
+          && github.ref == 'refs/heads/main'
+          && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          echo 'staging_domain=${{inputs.staging_domain}}'
+          echo 'event_name=${{github.event_name}}'
+          echo 'ref=${{github.ref}}'
+
+          vercel alias set \
+            '${{ steps.vercel_deploy.outputs.preview_url }}' \
+            '${{ inputs.staging_domain }}' \
+            --scope="${{ inputs.vercel_scope }}" \
+            --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Create a GitHub deployment
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         with:
