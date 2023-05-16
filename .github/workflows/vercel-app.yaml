@@ -62,13 +62,12 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-vercel-app
   cancel-in-progress: false
 
 jobs:
   test-and-lint:
     name: Test and lint
-    if: inputs.lint_command && inputs.test_command
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
