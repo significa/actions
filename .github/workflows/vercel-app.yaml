@@ -185,7 +185,7 @@ jobs:
         run: |
           vercel alias set \
           '${{ steps.vercel_deploy.outputs.preview_url }}' \
-          '${{ inputs.staging_domain }}' \
+          '${{ inputs.production_domain }}' \
           --scope="${{ inputs.vercel_scope }}" \
           --token="${{ secrets.VERCEL_TOKEN }}"
 
