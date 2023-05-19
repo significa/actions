@@ -1,0 +1,78 @@
+name: Python package
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        description: Python version to use.
+        type: string
+        required: false
+        default: "3.11"
+
+      lint_command:
+        description: Lint command.
+        type: string
+        required: false
+        default: |
+          pip install -r requirements.txt -r requirements.dev.txt && \
+          pycodestyle . && \
+          flake8 . && \
+          isort . --check
+
+      publish_to_pip:
+        description: True to publish to PIP.
+        type: boolean
+        default: false
+        required: false
+
+    secrets:
+      TWINE_USERNAME:
+        required: false
+      TWINE_PASSWORD:
+        required: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Lint
+        run: ${{ inputs.lint_command }}
+
+  publish:
+    name: Publish
+    if: github.event_name == 'release' && inputs.publish_to_pip
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-python-package-publish
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install dependencies
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
