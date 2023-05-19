@@ -22,7 +22,7 @@ on:
       publish_to_pip:
         description: True to publish to PIP.
         type: boolean
-        default: false
+        default: true
         required: false
 
     secrets:
