@@ -227,4 +227,5 @@ jobs:
               target_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
               environment_url: '${{ steps.vercel_deploy.outputs.preview_url }}',
               state: 'success',
+              auto_inactive: false,
             });
