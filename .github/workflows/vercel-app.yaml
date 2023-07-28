@@ -121,9 +121,13 @@ jobs:
       - name: Assert valid release name
         if: |
           github.event_name == 'release'
-          && ! (startsWith(github.event.release.name, 'v') && startsWith(github.event.release.tag_name, 'v'))
+          && ! (
+            startsWith(github.event.release.name, 'v')
+            && startsWith(github.event.release.tag_name, 'v')
+          )
         run: |
           >&2 echo "Releases must be tagged with a semver complient string prefixed with 'v'. Ex: 'v1.2.3'"
+          exit 1
 
       - uses: actions/checkout@v3
 
@@ -179,9 +183,13 @@ jobs:
       - name: Set deployment alias (production)
         if: |
           inputs.production_domain
-          && github.event_name == 'release'
-          && startsWith(github.event.release.name, 'v')
-          && startsWith(github.event.release.tag_name, 'v')
+          && (
+            (
+              github.event_name == 'release'
+              && startsWith(github.event.release.name, 'v')
+              && startsWith(github.event.release.tag_name, 'v')
+            ) || github.event_name == 'workflow_dispatch'
+          )
         run: |
           vercel alias set \
           '${{ steps.vercel_deploy.outputs.preview_url }}' \
