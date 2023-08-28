@@ -140,6 +140,14 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+      
+      - name: Set package.json version
+        if: (! startsWith(github.ref_name, 'v'))
+        run: npm version --no-git-tag-version "v0.0.1-${{ github.sha }}"
+
+      - name: Set package.json version (release)
+        if: startsWith(github.ref_name, 'v')
+        run: npm version --no-git-tag-version "${{ github.ref_name }}"
 
       - name: Get Vercel CLI options
         id: vercel_opts
@@ -156,7 +164,7 @@ jobs:
          fi
         env:
           IS_PRODUCTION: ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')}}
-          
+
       - name: Deploy to Vercel
         id: vercel_deploy
         env:
