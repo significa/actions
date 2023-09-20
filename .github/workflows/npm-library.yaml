@@ -7,7 +7,7 @@ on:
         description: JSON array (as string) of Node versions to test.
         type: string
         required: false
-        default: '[16, 18, 19]'
+        default: '[18, 20]'
 
       install_command:
         description: Install command.
