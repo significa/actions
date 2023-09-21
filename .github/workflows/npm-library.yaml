@@ -4,10 +4,12 @@ on:
   workflow_call:
     inputs:
       node_versions:
-        description: JSON array (as string) of Node versions to test.
+        description: |
+          JSON array (as string) of Node versions to test.
+          Defaults to all the versions still supported.
         type: string
         required: false
-        default: '[18, 20]'
+        default: null
 
       install_command:
         description: Install command.
@@ -68,17 +70,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  get_node_versions:
+    name: Get node versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      active_versions: ${{ steps.get_node_versions.outputs.active_versions }}
+      latest_version: ${{ steps.get_node_versions.outputs.latest_version }}
+    steps:
+      - id: get_node_versions
+        name: Get node versions
+        run: |
+          if [ "${{ inputs.node_versions }}" ]; then
+            active_versions="${{ inputs.node_versions }}"
+          else
+            active_versions=$(
+              curl -s "https://endoflife.date/api/nodejs.json" \
+              | jq -c '[.[] | select(.eol != true and (.eol == false or (.eol | strptime("%Y-%m-%d") | mktime) > now)) | .cycle ]'
+            )
+          fi
+
+          latest_version=$(echo "$active_versions" | jq -r 'max')
+
+          echo "active_versions=${active_versions}" | tee -a $GITHUB_OUTPUT
+          echo "latest_version=${latest_version}" | tee -a $GITHUB_OUTPUT
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs:
+      - get_node_versions
     steps:
       - uses: actions/checkout@v3
-
-      - name: Check checks
-        shell: bash
-        run: |
-          [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
 
       - name: Custom checks when publishing
         if: inputs.publish_to_npm_registry || inputs.publish_to_github_registry
@@ -108,7 +132,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
+          node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
@@ -123,10 +147,12 @@ jobs:
     name: Test and build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs:
+      - get_node_versions
     strategy:
       fail-fast: true
       matrix:
-        node_version: ${{ fromJSON(inputs.node_versions) }}
+        node_version: ${{ fromJSON(needs.get_node_versions.outputs.active_versions) }}
 
     steps:
       - uses: actions/checkout@v3
@@ -154,6 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs:
+      - get_node_versions
       - lint
       - test
     if: |
@@ -169,7 +196,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
+          node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
