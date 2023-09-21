@@ -76,13 +76,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Custom checks to configs
+      - name: Custom checks for configs
         run: |
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
       - name: Delete commited .npmrc
-        run: rm .npmrc
+        run: rm -f .npmrc
 
       - uses: actions/setup-node@v3
         with:
