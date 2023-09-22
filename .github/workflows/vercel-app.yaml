@@ -37,8 +37,14 @@ on:
         default: null
         type: string
 
+      staging_branch:
+        description: The branch name for the staging environment.
+        required: false
+        type: string
+        default: main
+
       staging_domain:
-        description: Staging domain (preview domain for the main branch).
+        description: Staging domain (main preview domain, deployed on push to the `staging_branch`).
         required: false
         type: string
 
@@ -208,7 +214,7 @@ jobs:
       - name: Set deployment alias (preview)
         if: |
           inputs.staging_domain
-          && github.ref == 'refs/heads/main'
+          && github.ref == 'refs/heads/${{ inputs.staging_branch }}'
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
           echo 'staging_domain=${{inputs.staging_domain}}'
