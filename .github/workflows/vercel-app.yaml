@@ -202,7 +202,10 @@ jobs:
               github.event_name == 'release'
               && startsWith(github.event.release.name, 'v')
               && startsWith(github.event.release.tag_name, 'v')
-            ) || github.event_name == 'workflow_dispatch'
+            ) || (
+              github.event_name == 'workflow_dispatch'
+              && startsWith(github.ref_name, 'v')
+            )
           )
         run: |
           vercel alias set \
@@ -217,10 +220,20 @@ jobs:
           && github.ref == 'refs/heads/${{ inputs.staging_branch }}'
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
-          echo 'staging_domain=${{inputs.staging_domain}}'
-          echo 'event_name=${{github.event_name}}'
-          echo 'ref=${{github.ref}}'
+          echo 'Patching the domain ${{ inputs.staging_domain }} to ensure it is in preview mode'
+          curl \
+            --silent \
+            --request PATCH \
+            --url 'https://vercel.com/api/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}/domains/${{ inputs.staging_domain }}?teamId=${{ secrets.VERCEL_ORG_ID }}' \
+            --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "redirect": null,
+              "redirectStatusCode": null,
+              "gitBranch": "main"
+            }'
 
+          echo "Setting the deployment alias"
           vercel alias set \
             '${{ steps.vercel_deploy.outputs.preview_url }}' \
             '${{ inputs.staging_domain }}' \
