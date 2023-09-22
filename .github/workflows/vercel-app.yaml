@@ -59,6 +59,12 @@ on:
         type: string
         default: significa
 
+      job_timeout_minutes:
+        description: Job maximum execution time in minutes.
+        required: false
+        type: number
+        default: 10
+
     secrets:
       VERCEL_TOKEN:
         required: true
@@ -75,7 +81,7 @@ jobs:
   test-and-lint:
     name: Test and lint
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: ${{ inputs.job_timeout_minutes }}
     permissions:
       contents: read
       packages: read
@@ -113,7 +119,7 @@ jobs:
   build-and-depploy:
     name: Build and deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: ${{ inputs.job_timeout_minutes }}
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -222,7 +228,7 @@ jobs:
         run: |
           echo 'Patching the domain ${{ inputs.staging_domain }} to ensure it is in preview mode'
           curl \
-            --silent \
+            --silent --fail \
             --request PATCH \
             --url 'https://vercel.com/api/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}/domains/${{ inputs.staging_domain }}?teamId=${{ secrets.VERCEL_ORG_ID }}' \
             --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
