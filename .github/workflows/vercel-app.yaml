@@ -54,10 +54,9 @@ on:
         type: string
 
       vercel_scope:
-        description: Vercel team scope, required for custom domain aliases.
+        description: DEPRECATED
         required: false
         type: string
-        default: significa
 
       job_timeout_minutes:
         description: Job maximum execution time in minutes.
@@ -214,11 +213,19 @@ jobs:
             )
           )
         run: |
+          vercel_organization_slug=$(
+            curl GET --silent \
+              --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
+              --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
+              | jq -r '.slug'
+          )
+
+          echo "Setting the deployment alias (scope: $vercel_organization_slug)"
           vercel alias set \
-          '${{ steps.vercel_deploy.outputs.preview_url }}' \
-          '${{ inputs.production_domain }}' \
-          --scope="${{ inputs.vercel_scope }}" \
-          --token="${{ secrets.VERCEL_TOKEN }}"
+            '${{ steps.vercel_deploy.outputs.preview_url }}' \
+            '${{ inputs.production_domain }}' \
+            --scope="$vercel_organization_slug" \
+            --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Set deployment alias (preview)
         if: |
@@ -239,11 +246,18 @@ jobs:
               "gitBranch": "main"
             }'
 
-          echo "Setting the deployment alias"
+          vercel_organization_slug=$(
+            curl GET --silent \
+              --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
+              --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
+              | jq -r '.slug'
+          )
+
+          echo "Setting the deployment alias (scope: $vercel_organization_slug)"
           vercel alias set \
             '${{ steps.vercel_deploy.outputs.preview_url }}' \
             '${{ inputs.staging_domain }}' \
-            --scope="${{ inputs.vercel_scope }}" \
+            --scope="$vercel_organization_slug" \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Create a GitHub deployment
