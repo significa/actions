@@ -70,7 +70,7 @@ jobs:
 
       - name: Build and publish
         env:
-          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME || '__token__' }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
           VERSION: ${{ github.ref_name }}
         run: |
