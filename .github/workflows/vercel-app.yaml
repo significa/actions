@@ -230,7 +230,7 @@ jobs:
       - name: Set deployment alias (preview)
         if: |
           inputs.staging_domain
-          && github.ref == 'refs/heads/${{ inputs.staging_branch }}'
+          && github.ref_name == inputs.staging_branch
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
           echo 'Patching the domain ${{ inputs.staging_domain }} to ensure it is in preview mode'
