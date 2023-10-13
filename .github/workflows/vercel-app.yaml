@@ -194,6 +194,7 @@ jobs:
           vercel deploy \
             --yes \
             ${{ steps.vercel_opts.outputs.extra_options }} \
+            --archive=tgz \
             --prebuilt \
             --token="${{ secrets.VERCEL_TOKEN }}" \
             --name="${{ github.ref_name }}" \
