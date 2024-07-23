@@ -1,0 +1,130 @@
+name: React native app
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        description: Node version to be used
+        type: string
+        required: false
+        default: null
+
+    secrets:
+      EXPO_TOKEN:
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-expo-app
+  cancel-in-progress: false
+
+jobs:
+  buuld:
+    name: Publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Custom checks for configs
+        run: |
+          [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          scope: ${{ inputs.npm_scope }}
+
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Lint
+        run: ${{ inputs.lint_command }}
+
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - get_node_versions
+    strategy:
+      fail-fast: true
+      matrix:
+        node_version: ${{ fromJSON(needs.get_node_versions.outputs.active_versions) }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+          cache: npm
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Test
+        if: inputs.test_command
+        run: ${{ inputs.test_command }}
+
+      - name: Build
+        if: inputs.build_command
+        run: ${{ inputs.build_command }}
+
+  publish:
+    name: Publish library
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - get_node_versions
+      - lint
+      - test
+    if: |
+      (inputs.publish_to_github_registry || inputs.publish_to_npm_registry)
+      && github.event_name == 'release'
+      && startsWith(github.event.release.name, 'v')
+      && startsWith(github.event.release.tag_name, 'v')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ needs.get_node_versions.outputs.latest_version }}
+          cache: npm
+          scope: ${{ inputs.npm_scope }}
+          registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Set package.json version
+        run: npm version --no-git-tag-version "${{ github.ref_name }}"
+
+      - name: Build
+        run: ${{ inputs.build_command }}
+
+      - name: Publish to GitHub registry
+        if: inputs.publish_to_github_registry
+        run: |
+          cat > ./.npmrc <<EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          ${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/
+          EOF
+
+          npm publish
+
+      - name: Publish to the NPM registry
+        if: inputs.publish_to_npm_registry
+        run: |
+          cat > ./.npmrc <<EOF
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
+          EOF
+
+          npm publish
