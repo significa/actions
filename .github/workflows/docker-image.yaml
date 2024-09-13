@@ -10,7 +10,7 @@ on:
         platforms_architectures:
           description: Comma separated list of Docker architectures to use with BuildKit.
           required: false
-          default: "linux/amd64, linux/arm64"
+          default: "linux/amd64,linux/arm64"
           type: string
 
 jobs:
