@@ -130,7 +130,7 @@ jobs:
             && exit 1 \
           )
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
@@ -157,7 +157,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
           cache: npm
@@ -194,7 +194,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
