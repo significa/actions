@@ -58,7 +58,7 @@ jobs:
             otp-version: "21.x"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.18
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.18
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.18
@@ -149,7 +149,7 @@ jobs:
       && startsWith(github.event.release.tag_name, 'v')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.18
