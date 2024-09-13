@@ -1,0 +1,66 @@
+name: Container on Fly.io
+
+on:
+  workflow_call:
+    inputs:
+      staging_app_name:
+        description: Staging Fly.io app name
+        type: string
+        required: false
+
+      production_app_name:
+        description: Production Fly.io app name
+        type: string
+        required: false
+
+      staging_branch:
+        description: Branch used to dpeloy to staging
+        type: string
+        default: main
+
+    secrets:
+      FLY_API_TOKEN_STAGING:
+        required: true
+      FLY_API_TOKEN_PRODUCTION:
+        required: true
+
+concurrency:
+  group: ${{ github.workflow_ref }}
+  cancel-in-progress: false
+  
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    if: |
+      github.event_name == 'release' || 
+      (
+        github.event_name == 'push' || 
+        github.event_name == 'workflow_dispatch'
+      ) && github.ref_name == inputs.staging_branch
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-fly-deploy-${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Dpeloy to staging
+        if: inputs.staging_app_name && github.ref_name == inputs.staging_branch
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+        run: |
+          flyctl deploy \
+            -a ${{ inputs.staging_app_name }} \
+            --remote-only \
+            --build-arg APP_VERSION="0.0.1-staging-${{ github.sha }}"
+
+      - name: Deploy to production
+        if: inputs.production_app_name && github.event_name == 'release'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
+        run: |
+          flyctl deploy \
+            -a ${{ inputs.production_app_name }} \
+            --remote-only \
+            --build-arg APP_VERSION="${{ github.ref_name }}"
