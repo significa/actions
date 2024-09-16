@@ -19,6 +19,13 @@ on:
           flake8 . && \
           isort . --check
 
+      install_command:
+        description: Install dev dependencies command.
+        type: string
+        required: false
+        default: |
+          python -m pip install -r requirements.dev.txt
+
       publish_to_pip:
         description: True to publish to PIP.
         type: boolean
@@ -45,6 +52,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: inputs.lint_command
     steps:
       - uses: actions/checkout@v4
 
@@ -52,6 +60,9 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
           cache: 'pip'
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
 
       - name: Lint
         run: ${{ inputs.lint_command }}
