@@ -6,7 +6,7 @@ Reusable GitHub actions workflows.
 
 ### Deploy container to fly
 
-[`.github/workflows/container-on-fly.yaml.yaml`](./.github/workflows/container-on-fly.yaml.yaml)
+[`.github/workflows/container-on-fly.yaml`](./.github/workflows/container-on-fly.yaml)
 
 Usage:
 
@@ -58,7 +58,6 @@ Inputs:
 
 - `image_name`
 - `platforms_architectures`
-
 
 ### Test and publish elixir library
 
@@ -175,7 +174,7 @@ ci-cd:
     deployments: write
   uses: significa/actions/.github/workflows/vercel-app.yaml@main
   with:
-    npm_scope: '@significa'
+    npm_scope: "@significa"
   secrets:
     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
