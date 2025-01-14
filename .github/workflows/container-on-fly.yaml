@@ -35,9 +35,9 @@ on:
 
     secrets:
       FLY_API_TOKEN_STAGING:
-        required: true
+        required: false
       FLY_API_TOKEN_PRODUCTION:
-        required: true
+        required: false
 
 concurrency:
   group: ${{ github.workflow_ref }}
