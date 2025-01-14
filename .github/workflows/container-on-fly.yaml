@@ -44,7 +44,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  lint-fly:
+  lint-fly-config:
     name: Lint Fly config
     if: inputs.lint_fly_config
     runs-on: ubuntu-latest
@@ -64,6 +64,8 @@ jobs:
 
   build-and-deploy:
     name: Fly deploy
+    needs:
+      - lint-fly-config
     if: |
       github.event_name == 'release' || 
       (
