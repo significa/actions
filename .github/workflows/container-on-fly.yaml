@@ -4,12 +4,12 @@ on:
   workflow_call:
     inputs:
       staging_app_name:
-        description: Staging Fly.io app name
+        description: Staging Fly.io app name, optional when already specified in the fly.toml
         type: string
         required: false
 
       production_app_name:
-        description: Production Fly.io app name
+        description: Production Fly.io app name, optional when already specified in the fly.toml
         type: string
         required: false
 
@@ -17,6 +17,21 @@ on:
         description: Branch used to deploy to staging
         type: string
         default: main
+
+      staging_fly_config_path:
+        description: Path to the fly config for the staging environment
+        type: string
+        default: fly.toml
+
+      production_fly_config_path:
+        description: Path to the fly config for the staging environment
+        type: string
+        default: fly.toml
+
+      lint_fly_config:
+        description: If we should lint the fly.toml config.
+        type: boolean
+        default: true
 
     secrets:
       FLY_API_TOKEN_STAGING:
@@ -29,8 +44,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  lint-fly:
+    name: Lint Fly config
+    if: inputs.lint_fly_config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - uses: actions/checkout@v4
+
+      - run: flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+
+      - run: flyctl config validate --config "${{ inputs.production_fly_config_path }}"
+        if: inputs.staging_fly_config_path != inputs.production_fly_config_path
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+
   build-and-deploy:
-    name: Build & Deploy
+    name: Fly deploy
     if: |
       github.event_name == 'release' || 
       (
@@ -49,9 +82,9 @@ jobs:
         if: inputs.staging_app_name && github.ref_name == inputs.staging_branch
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+          FLY_APP: ${{ inputs.staging_app_name }}
         run: |
           flyctl deploy \
-            -a ${{ inputs.staging_app_name }} \
             --remote-only \
             --build-arg APP_VERSION="0.0.1-staging-${{ github.sha }}"
 
@@ -59,8 +92,8 @@ jobs:
         if: inputs.production_app_name && github.event_name == 'release'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
+          FLY_APP: ${{ inputs.production_app_name }}
         run: |
           flyctl deploy \
-            -a ${{ inputs.production_app_name }} \
             --remote-only \
             --build-arg APP_VERSION="${{ github.ref_name }}"
