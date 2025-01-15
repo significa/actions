@@ -87,6 +87,7 @@ jobs:
           FLY_APP: ${{ inputs.staging_app_name }}
         run: |
           flyctl deploy \
+            --config ${{ inputs.staging_fly_config_path }} \
             --remote-only \
             --build-arg APP_VERSION="0.0.1-staging-${{ github.sha }}"
 
@@ -97,5 +98,6 @@ jobs:
           FLY_APP: ${{ inputs.production_app_name }}
         run: |
           flyctl deploy \
+            --config ${{ inputs.production_fly_config_path }} \
             --remote-only \
             --build-arg APP_VERSION="${{ github.ref_name }}"
