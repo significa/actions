@@ -1,6 +1,6 @@
 # Shared GitHub actions workflows used by Significa
 
-Reusable GitHub actions workflows.
+Significa's reusable GitHub actions workflows.
 
 ## Available actions
 

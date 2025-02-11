@@ -48,6 +48,14 @@ on:
         required: false
         type: string
 
+      production_branch:
+        description: >-
+          The branch name for the production environment, defaults to null -
+          this way it uses the release deployment strategy.
+        required: false
+        default: null
+        type: string
+
       production_domain:
         description: Production domain (domain to be applied for the production releases).
         required: false
@@ -92,7 +100,7 @@ jobs:
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
-      - name: Delete commited .npmrc
+      - name: Delete committed .npmrc
         run: rm -f .npmrc
 
       - uses: actions/setup-node@v4
@@ -115,7 +123,7 @@ jobs:
         if: inputs.test_command
         run: ${{ inputs.test_command }}
   
-  build-and-depploy:
+  build-and-deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.job_timeout_minutes }}
@@ -137,7 +145,7 @@ jobs:
             && startsWith(github.event.release.tag_name, 'v')
           )
         run: |
-          >&2 echo "Releases must be tagged with a semver complient string prefixed with 'v'. Ex: 'v1.2.3'"
+          >&2 echo "Releases must be tagged with a semver compliant string prefixed with 'v'. Ex: 'v1.2.3'"
           exit 1
 
       - uses: actions/checkout@v4
@@ -165,7 +173,7 @@ jobs:
         shell: bash
         run: |
          if [[ "$IS_PRODUCTION" == "true" ]]; then
-          echo "Producton"
+          echo "Production"
           echo "environment=production" >> "$GITHUB_OUTPUT"
           echo "extra_options=--prod" >> "$GITHUB_OUTPUT"
          else
@@ -174,7 +182,7 @@ jobs:
           echo "extra_options=" >> "$GITHUB_OUTPUT"
          fi
         env:
-          IS_PRODUCTION: ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')}}
+          IS_PRODUCTION: ${{ ((github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')) || ((github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_name == inputs.production_branch) }}
 
       - name: Deploy to Vercel
         id: vercel_deploy
@@ -211,6 +219,9 @@ jobs:
             ) || (
               github.event_name == 'workflow_dispatch'
               && startsWith(github.ref_name, 'v')
+            ) || (
+              (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+              && github.ref_name == inputs.production_branch
             )
           )
         run: |
@@ -228,7 +239,7 @@ jobs:
             --scope="$vercel_organization_slug" \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
-      - name: Set deployment alias (preview)
+      - name: Set deployment alias (preview/staging)
         if: |
           inputs.staging_domain
           && github.ref_name == inputs.staging_branch
