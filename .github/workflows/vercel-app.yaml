@@ -150,6 +150,9 @@ jobs:
           exit 1
 
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # FIXME: make it configurable
 
       - uses: actions/setup-node@v4
         with:
