@@ -91,9 +91,10 @@ jobs:
             os: "ubuntu-24.04"
 
           # Elixir 1.14 combinations
-          - elixir-version: "1.14"
-            otp-version: "23.x"
-            os: "ubuntu-20.04"
+          # - elixir-version: "1.14"
+          #   otp-version: "23.x"
+          #   os: "ubuntu-20.04"
+          #  ubuntu-20.04 no longer compatible
           - elixir-version: "1.14"
             otp-version: "24.x"
             os: "ubuntu-24.04"
