@@ -49,15 +49,17 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - run: flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
+      - name: "Lint fly config ${{ inputs.staging_fly_config_path }}"
+        run: flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
         if: inputs.staging_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
 
-      - run: flyctl config validate --config "${{ inputs.production_fly_config_path }}"
+      - name: "Lint fly config ${{ inputs.production_fly_config_path }}"
+        run: flyctl config validate --config "${{ inputs.production_fly_config_path }}"
         if: inputs.production_fly_config_path && inputs.staging_fly_config_path != inputs.production_fly_config_path
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
 
   build-and-deploy:
     name: Fly deploy
