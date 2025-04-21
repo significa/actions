@@ -50,13 +50,25 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: "Lint fly config ${{ inputs.staging_fly_config_path }}"
-        run: flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "Error: FLY_API_TOKEN is not set, skipping"
+            exit 0
+          fi
+
+          flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
         if: inputs.staging_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
 
       - name: "Lint fly config ${{ inputs.production_fly_config_path }}"
-        run: flyctl config validate --config "${{ inputs.production_fly_config_path }}"
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "Error: FLY_API_TOKEN is not set, skipping"
+            exit 0
+          fi
+
+          flyctl config validate --config "${{ inputs.production_fly_config_path }}"
         if: inputs.production_fly_config_path && inputs.staging_fly_config_path != inputs.production_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
