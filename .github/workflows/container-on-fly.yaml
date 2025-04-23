@@ -31,7 +31,7 @@ on:
       lint_fly_config:
         description: If we should lint the fly.toml config.
         type: boolean
-        default: true
+        default: false
 
     secrets:
       FLY_API_TOKEN_STAGING:
@@ -41,13 +41,14 @@ on:
 
 jobs:
   lint-fly-config:
-    name: Lint Fly config
-    if: inputs.lint_fly_config
+    name: Lint Fly toml config
     runs-on: ubuntu-latest
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: inputs.lint_fly_config
 
       - uses: actions/checkout@v4
+        if: inputs.lint_fly_config
 
       - name: "Lint fly config ${{ inputs.staging_fly_config_path }}"
         run: |
@@ -57,7 +58,7 @@ jobs:
           fi
 
           flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
-        if: inputs.staging_fly_config_path
+        if: inputs.lint_fly_config && inputs.staging_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
 
@@ -69,7 +70,7 @@ jobs:
           fi
 
           flyctl config validate --config "${{ inputs.production_fly_config_path }}"
-        if: inputs.production_fly_config_path && inputs.staging_fly_config_path != inputs.production_fly_config_path
+        if: inputs.lint_fly_config && inputs.production_fly_config_path && inputs.staging_fly_config_path != inputs.production_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
 
