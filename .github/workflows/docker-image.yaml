@@ -71,7 +71,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           platforms: ${{ inputs.platforms_architectures }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' || github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           cache-from: type=gha
