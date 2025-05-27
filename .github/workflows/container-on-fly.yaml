@@ -46,7 +46,7 @@ on:
 
 jobs:
   lint-fly-config:
-    name: Lint Fly toml config
+    name: Lint fly.toml
     runs-on: ubuntu-latest
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -80,7 +80,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
 
   build-and-deploy:
-    name: Fly deploy
+    name: Deploy
     needs:
       - lint-fly-config
     if: |
