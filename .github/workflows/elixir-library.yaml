@@ -44,7 +44,7 @@ jobs:
       matrix:
         # Source of truth for the compatibility matrix:
         #   https://hexdocs.pm/elixir/compatibility-and-deprecations.html
-        #   https://builds.hex.pm/builds/otp/ubuntu-XX.XX/builds.txt
+        #   https://builds.hex.pm/builds/otp/ubuntu-24.04/builds.txt
         include:
          # Elixir 1.18 combinations
           - elixir-version: "1.18"
