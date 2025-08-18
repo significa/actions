@@ -85,7 +85,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Custom checks for configs
         run: |
@@ -140,7 +140,7 @@ jobs:
           >&2 echo "Releases must be tagged with a semver complient string prefixed with 'v'. Ex: 'v1.2.3'"
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v4
         with:
