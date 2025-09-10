@@ -115,13 +115,14 @@ jobs:
         if: inputs.test_command
         run: ${{ inputs.test_command }}
   
-  build-and-depploy:
+  build-and-deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.job_timeout_minutes }}
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TELEMETRY_DISABLED: 1
     permissions:
       deployments: write
       contents: read
