@@ -39,7 +39,7 @@ on:
         description: "NPM scope (containing the '@' symbol, ex: @example)."
         type: string
         required: false
-        default: "@significa"
+        default: '@${{ github.repository_owner }}'
 
       install_registry_url:
         description: >-
@@ -218,7 +218,9 @@ jobs:
           ${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/
           EOF
 
-          npm publish
+          npm publish --tag ${{ github.event.release.prerelease && 'prerelease' || 'latest' }}
+
+          rm -f ./.npmrc
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_npm_registry
@@ -228,4 +230,6 @@ jobs:
           ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
           EOF
 
-          npm publish
+          npm publish --tag ${{ github.event.release.prerelease && 'prerelease' || 'latest' }}
+
+          rm -f ./.npmrc
