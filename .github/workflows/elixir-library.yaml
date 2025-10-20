@@ -46,6 +46,17 @@ jobs:
         #   https://hexdocs.pm/elixir/compatibility-and-deprecations.html
         #   https://builds.hex.pm/builds/otp/ubuntu-24.04/builds.txt
         include:
+         # Elixir 1.19 combinations
+          - elixir-version: "1.19"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.19"
+            otp-version: "27.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.19"
+            otp-version: "28.x"
+            os: "ubuntu-24.04"
+
          # Elixir 1.18 combinations
           - elixir-version: "1.18"
             otp-version: "25.x"
@@ -90,26 +101,11 @@ jobs:
             otp-version: "26.x"
             os: "ubuntu-24.04"
 
-          # Elixir 1.14 combinations
-          # - elixir-version: "1.14"
-          #   otp-version: "23.x"
-          #   os: "ubuntu-20.04"
-          #  ubuntu-20.04 no longer compatible
-          - elixir-version: "1.14"
-            otp-version: "24.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.14"
-            otp-version: "25.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.14"
-            otp-version: "26.x"
-            os: "ubuntu-24.04"
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.20
         with:
           elixir-version: ${{ matrix.elixir-version }}
           otp-version: ${{ matrix.otp-version }}
@@ -130,10 +126,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.20
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
@@ -154,10 +150,10 @@ jobs:
     runs-on: ${{ inputs.latest-otp-os-version }}
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.20
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
@@ -202,10 +198,10 @@ jobs:
       )
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.20
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
@@ -222,7 +218,7 @@ jobs:
       - name: Tagging version in mix.exs for production release
         if: inputs.replace-mix-version && github.event_name == 'release'
         run: |
-          VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//')
+          VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//')-${{ github.run_attempt }}
           echo "Setting version in mix.exs to ${VERSION}"
           sed -i "s/0.0.1-development/${VERSION}/g" mix.exs
 
