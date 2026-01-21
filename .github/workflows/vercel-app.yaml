@@ -92,7 +92,11 @@ jobs:
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
+      # TODO: understand wht was the reason behind deleting .npmrc
+      # This was needed at some point but I don't remember why.
+      # Maybe it contained auth tokens, references to env variables, or private registries?
       - name: Delete commited .npmrc
+        if: inputs.npm_scope || inputs.install_registry_url
         run: rm -f .npmrc
 
       - uses: actions/setup-node@v4
@@ -184,7 +188,7 @@ jobs:
         shell: bash
         run: |
           vercel pull --yes \
-            --environment= ${{ steps.vercel_opts.outputs.environment }} \
+            --environment=${{ steps.vercel_opts.outputs.environment }} \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
           vercel build \
