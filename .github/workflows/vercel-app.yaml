@@ -205,33 +205,38 @@ jobs:
             --name="${{ github.ref_name }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
-      - name: Set deployment alias (production)
-        if: |
-          inputs.production_domain
-          && (
-            (
-              github.event_name == 'release'
-              && startsWith(github.event.release.name, 'v')
-              && startsWith(github.event.release.tag_name, 'v')
-            ) || (
-              github.event_name == 'workflow_dispatch'
-              && startsWith(github.ref_name, 'v')
-            )
-          )
-        run: |
-          vercel_organization_slug=$(
-            curl GET --silent \
-              --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
-              --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
-              | jq -r '.slug'
-          )
-
-          echo "Setting the deployment alias (scope: $vercel_organization_slug)"
-          vercel alias set \
-            '${{ steps.vercel_deploy.outputs.preview_url }}' \
-            '${{ inputs.production_domain }}' \
-            --scope="$vercel_organization_slug" \
-            --token="${{ secrets.VERCEL_TOKEN }}"
+      # 
+      # Removed as Vercel no longer needs aliasing for production deployments
+      # (they are deploying directly as prod instead of becoming staged preview environment)
+      # TODO: Remove when we are sure this is no longer needed
+      # 
+      # - name: Set deployment alias (production)
+      #   if: |
+      #     inputs.production_domain
+      #     && (
+      #       (
+      #         github.event_name == 'release'
+      #         && startsWith(github.event.release.name, 'v')
+      #         && startsWith(github.event.release.tag_name, 'v')
+      #       ) || (
+      #         github.event_name == 'workflow_dispatch'
+      #         && startsWith(github.ref_name, 'v')
+      #       )
+      #     )
+      #   run: |
+      #     vercel_organization_slug=$(
+      #       curl GET --silent \
+      #         --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
+      #         --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
+      #         | jq -r '.slug'
+      #     )
+      #
+      #     echo "Setting the deployment alias (scope: $vercel_organization_slug)"
+      #     vercel alias set \
+      #       '${{ steps.vercel_deploy.outputs.preview_url }}' \
+      #       '${{ inputs.production_domain }}' \
+      #       --scope="$vercel_organization_slug" \
+      #       --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Set deployment alias (preview)
         if: |
