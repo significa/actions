@@ -33,11 +33,6 @@ on:
         type: boolean
         default: false
 
-      deploy_strategy:
-        description: The deploy strategy to use, see https://fly.io/docs/reference/configuration/#picking-a-deployment-strategy.
-        type: string
-        default: "rolling"
-
     secrets:
       FLY_API_TOKEN_STAGING:
         required: false
@@ -104,7 +99,6 @@ jobs:
           FLY_APP: ${{ inputs.staging_app_name }}
         run: |
           flyctl deploy \
-            --strategy ${{ inputs.deploy_strategy }} \
             --config ${{ inputs.staging_fly_config_path }} \
             --remote-only \
             --build-arg APP_VERSION="0.0.1-${{ github.ref_name }}-${{ github.sha }}"
@@ -116,7 +110,6 @@ jobs:
           FLY_APP: ${{ inputs.production_app_name }}
         run: |
           flyctl deploy \
-            --strategy ${{ inputs.deploy_strategy }} \
             --config ${{ inputs.production_fly_config_path }} \
             --remote-only \
             --build-arg APP_VERSION="${{ github.ref_name }}"
