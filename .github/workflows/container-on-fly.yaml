@@ -49,6 +49,8 @@ jobs:
 
       - uses: actions/checkout@v6
         if: inputs.lint_fly_config
+        with:
+          fetch-depth: 1
 
       - name: "Lint fly config ${{ inputs.staging_fly_config_path }}"
         run: |
@@ -89,6 +91,8 @@ jobs:
       group: ${{ github.workflow }}-fly-deploy-${{ github.ref_name }}-${{ inputs.staging_fly_config_path }}-${{ inputs.production_fly_config_path }}-${{ inputs.staging_app_name }}-${{ inputs.production_app_name }}
     steps:
       - uses: actions/checkout@v6
+        with:
+            fetch-depth: 1
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 

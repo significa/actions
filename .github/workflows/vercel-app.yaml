@@ -97,6 +97,8 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
       
       - name: Custom checks for configs
         run: |
@@ -153,10 +155,12 @@ jobs:
             && startsWith(github.event.release.tag_name, 'v')
           )
         run: |
-          >&2 echo "Releases must be tagged with a semver complient string prefixed with 'v'. Ex: 'v1.2.3'"
+          >&2 echo "Releases must be tagged with a semver compliant string prefixed with 'v'. Ex: 'v1.2.3'"
           exit 1
 
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:

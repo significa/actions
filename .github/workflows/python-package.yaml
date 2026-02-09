@@ -55,6 +55,8 @@ jobs:
     if: inputs.lint_command
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
@@ -78,6 +80,8 @@ jobs:
       - lint
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:

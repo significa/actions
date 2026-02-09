@@ -103,6 +103,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.20
@@ -127,6 +129,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.20
@@ -151,6 +155,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.20
@@ -199,6 +205,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1.20

@@ -114,6 +114,8 @@ jobs:
       - get_node_versions
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Custom checks when publishing
         if: inputs.publish_to_npm_registry || inputs.publish_to_github_registry
