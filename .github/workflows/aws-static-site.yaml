@@ -1,0 +1,137 @@
+name: Build and deploy static site to AWS S3 + CloudFront
+
+on:
+  workflow_call:
+    inputs:
+      install_command:
+        description: 'Command to install dependencies'
+        type: string
+        default: 'pnpm install --frozen-lockfile'
+      build_command:
+        description: 'Command to build the static site'
+        type: string
+        required: true
+      dist_path:
+        description: 'Path to the built static files directory'
+        type: string
+        required: true
+      npm_scope:
+        description: 'NPM scope for GitHub packages registry (e.g., @significa)'
+        type: string
+        default: ''
+      aws_region:
+        description: 'AWS region for deployment'
+        type: string
+        default: 'eu-south-2'
+      use_turbo_cache:
+        description: 'Enable Turbo cache'
+        type: boolean
+        default: false
+    secrets:
+      AWS_DEPLOY_ROLE_ARN:
+        description: 'AWS IAM role ARN for authentication'
+        required: true
+      AWS_S3_BUCKET_URI:
+        description: 'S3 bucket URI (e.g., s3://my-bucket)'
+        required: true
+      AWS_CLOUDFRONT_DISTRIBUTION_ID:
+        description: 'CloudFront distribution ID for cache invalidation'
+        required: true
+      BUILD_ENV_VARS:
+        description: 'Environment variables for build step as KEY=VALUE pairs, one per line'
+        required: false
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  ADBLOCK: 1
+  DISABLE_OPENCOLLECTIVE: 1
+  OPEN_SOURCE_CONTRIBUTOR: true
+  NPM_CONFIG_FUND: false
+  NEXT_TELEMETRY_DISABLED: 1
+  STORYBOOK_DISABLE_TELEMETRY: 1
+  PRISMA_HIDE_UPDATE_MESSAGE: 1
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      deployments: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          lfs: true
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          scope: ${{ inputs.npm_scope }}
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Cache Turbo
+        if: inputs.use_turbo_cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse build environment variables
+        id: build-env
+        shell: bash
+        run: |
+          # Create a temporary env file from the BUILD_ENV_VARS secret
+          if [ -n "$BUILD_ENV_VARS" ]; then
+            echo "$BUILD_ENV_VARS" >> "$GITHUB_ENV"
+          fi
+        env:
+          BUILD_ENV_VARS: ${{ secrets.BUILD_ENV_VARS }}
+
+      - name: Build
+        run: ${{ inputs.build_command }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+          disable-retry: true
+
+      - name: Deploy static assets to S3
+        run: |
+          echo "Copying all files except index.html with immutable cache headers"
+          aws s3 cp \
+            --no-progress \
+            --recursive \
+            --exclude "index.html" \
+            --cache-control "public, max-age=31536000, immutable" \
+            "${{ inputs.dist_path }}" "${{ secrets.AWS_S3_BUCKET_URI }}"
+
+          echo "Copying index.html with no-cache headers"
+          aws s3 cp \
+            --no-progress \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            "${{ inputs.dist_path }}/index.html" "${{ secrets.AWS_S3_BUCKET_URI }}/index.html"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
