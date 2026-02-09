@@ -69,6 +69,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-npm-library
   cancel-in-progress: false
 
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  ADBLOCK: 1
+  DISABLE_OPENCOLLECTIVE: 1
+  OPEN_SOURCE_CONTRIBUTOR: true
+  NPM_CONFIG_FUND: false
+  NEXT_TELEMETRY_DISABLED: 1
+  STORYBOOK_DISABLE_TELEMETRY: 1
+  PRISMA_HIDE_UPDATE_MESSAGE: 1
+
 jobs:
   get_node_versions:
     name: Get node versions
@@ -130,7 +141,7 @@ jobs:
             && exit 1 \
           )
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
@@ -157,7 +168,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node_version }}
           cache: npm
@@ -194,7 +205,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
