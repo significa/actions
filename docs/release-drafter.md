@@ -25,8 +25,8 @@ on:
         description: 'Publish release immediately'
         type: boolean
         default: false
-      prerelease:
-        description: 'Mark as prerelease'
+      is_prerelease:
+        description: 'Mark as is_prerelease'
         type: boolean
         default: false
 
@@ -39,14 +39,14 @@ jobs:
     with:
       bump_type: ${{ inputs.bump_type }}
       publish_release: ${{ inputs.publish_release }}
-      prerelease: ${{ inputs.prerelease }}
+      is_prerelease: ${{ inputs.is_prerelease }}
 ```
 
 ## Inputs
 
 - `bump_type`: Version bump type - `patch` (default), `minor`, or `major`
 - `publish_release`: Publish release immediately instead of creating a draft (default: `false`)
-- `prerelease`: Mark the release as a prerelease (default: `false`)
+- `is_prerelease`: Mark the release as a is_prerelease (default: `false`)
 
 ## Permissions required
 
