@@ -1,22 +1,26 @@
-name: Release Drafter
+name: Release Creator
 
 on:
   workflow_call:
     inputs:
       bump_type:
         type: string
+      publish_release:
+        type: boolean
+        default: false
+      is_prerelease:
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
-  release:
-    name: Create Release Draft
+  create-release:
+    name: Create Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Get latest tag and calculate next version
         id: version
@@ -117,8 +121,8 @@ jobs:
               tag_name: nextVersion,
               name: nextVersion,
               body: releaseNotes,
-              draft: true,
-              prerelease: false,
+              draft: ${{ !inputs.publish_release }},
+              prerelease: ${{ inputs.is_prerelease }},
             });
             
             console.log(`Draft release created: ${release.html_url}`);

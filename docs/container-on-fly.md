@@ -2,21 +2,36 @@
 
 [`.github/workflows/container-on-fly.yaml`](../.github/workflows/container-on-fly.yaml)
 
-## Usage
+## Usage example
 
 ```yaml
-build-and-deploy:
-  name: Build & Deploy
-  needs:
-    - lint
-  uses: significa/actions/.github/workflows/container-on-fly.yaml@main
-  with:
-    staging_app_name: your-app-staging
-    production_app_name: your-app-staging-production
-    staging_branch: main
-  secrets:
-    FLY_API_TOKEN_STAGING: ${{ secrets.FLY_API_TOKEN_STAGING }}
-    FLY_API_TOKEN_PRODUCTION: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  # ...
+
+  build-and-deploy:
+    name: Build & Deploy
+    needs:
+      - lint
+    uses: significa/actions/.github/workflows/container-on-fly.yaml@main
+    with:
+      staging_app_name: your-app-staging
+      production_app_name: your-app-staging-production
+      staging_branch: main
+    secrets:
+      FLY_API_TOKEN_STAGING: ${{ secrets.FLY_API_TOKEN_STAGING }}
+      FLY_API_TOKEN_PRODUCTION: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
 ```
 
 ## Inputs

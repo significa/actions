@@ -21,6 +21,14 @@ on:
           - patch
           - minor
           - major
+      publish_release:
+        description: 'Publish release immediately'
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as prerelease'
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -30,11 +38,15 @@ jobs:
     uses: significa/actions/.github/workflows/release-drafter.yaml@main
     with:
       bump_type: ${{ inputs.bump_type }}
+      publish_release: ${{ inputs.publish_release }}
+      prerelease: ${{ inputs.prerelease }}
 ```
 
 ## Inputs
 
 - `bump_type`: Version bump type - `patch` (default), `minor`, or `major`
+- `publish_release`: Publish release immediately instead of creating a draft (default: `false`)
+- `prerelease`: Mark the release as a prerelease (default: `false`)
 
 ## Permissions required
 
