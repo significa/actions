@@ -1,0 +1,103 @@
+name: Build and push ECR image
+
+on:
+  workflow_call:
+    inputs:
+      ecr_repository_name:
+        type: string
+        required: true
+        description: 'ECR repository name'
+      aws_role_arn:
+        type: string
+        required: true
+        description: 'AWS IAM role ARN for assuming deployment permissions'
+      aws_region:
+        type: string
+        default: 'eu-south-2'
+        description: 'AWS region where the ECR repository is located'
+      dockerfile:
+        type: string
+        default: './Dockerfile'
+        description: 'Path to the Dockerfile'
+    outputs:
+      docker-image:
+        description: 'Full Docker image URI with tag'
+        value: ${{ jobs.build.outputs.docker-image }}
+      app-version:
+        description: 'Resolved application version'
+        value: ${{ jobs.build.outputs.app-version }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: Build and push
+    runs-on: ubuntu-latest
+
+    outputs:
+      docker-image: ${{ steps.image.outputs.full_image }}
+      app-version: ${{ steps.image.outputs.version }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ inputs.aws_role_arn }}
+          aws-region: us-east-1 # us-east-1 is required for OIDC token exchange
+          disable-retry: true
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: private
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
+          AWS_REGION: ${{ inputs.aws_region }}
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get app version and image ref
+        id: image
+        shell: bash
+        run: |
+          ref="${{ github.ref_name }}"
+          if [[ "$ref" == v* ]]; then
+            version=$(echo "$ref" | sed -e 's/^v//')
+          else
+            version="0.0.1-$(echo "$ref" | tr '/' '-')-${{ github.sha }}"
+          fi
+          
+          repository="${{ steps.ecr-login.outputs.registry }}/${{ inputs.ecr_repository_name }}"
+          tag="$(echo "$ref" | tr '/' '-')-${version}"
+          full_image="${repository}:${tag}"
+          
+          echo "version=${version}"
+          echo "repository=${repository}"
+          echo "tag=${tag}"
+          echo "full_image=${full_image}"
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "repository=${repository}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "full_image=${full_image}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          build-args: |
+            APP_VERSION=${{ steps.image.outputs.version }}
+          tags: |
+            ${{ steps.image.outputs.full_image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

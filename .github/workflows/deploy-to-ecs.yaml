@@ -1,0 +1,78 @@
+name: Deploy to ECS Service
+
+on:
+  workflow_call:
+    inputs:
+      ecs_cluster_name:
+        type: string
+        required: true
+        description: 'ECS cluster name'
+      ecs_service_name:
+        type: string
+        required: true
+        description: 'ECS service name'
+      ecs_task_definition_name:
+        type: string
+        required: true
+        description: 'ECS task definition name'
+      ecs_container_name:
+        type: string
+        required: true
+        description: 'Container name in the task definition'
+      docker_image:
+        type: string
+        required: true
+        description: 'Docker image URI to deploy'
+      aws_role_arn:
+        type: string
+        required: true
+        description: 'AWS IAM role ARN for assuming deployment permissions'
+      aws_region:
+        type: string
+        default: 'eu-south-2'
+        description: 'AWS region for ECS deployment'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-to-ecs:
+    name: Deploy to ECS Service
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ inputs.aws_role_arn }}
+          aws-region: us-east-1 # us-east-1 is required for OIDC token exchange
+          disable-retry: true
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --region ${{ inputs.aws_region }} \
+            --task-definition ${{ inputs.ecs_task_definition_name }} \
+            --query taskDefinition \
+            --output json \
+            > task-definition.json
+
+      - name: Update image in task definition
+        id: task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.ecs_container_name }}
+          image: ${{ inputs.docker_image }}
+
+      - name: Deploy task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-definition.outputs.task-definition }}
+          cluster: ${{ inputs.ecs_cluster_name }}
+          service: ${{ inputs.ecs_service_name }}
+          wait-for-service-stability: false
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
