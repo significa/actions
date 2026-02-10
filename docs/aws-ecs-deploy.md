@@ -1,6 +1,6 @@
 # Deploy to ECS Service
 
-[`.github/workflows/deploy-to-ecs.yaml`](../.github/workflows/deploy-to-ecs.yaml)
+[`.github/workflows/aws-ecs-deploy.yaml`](../.github/workflows/aws-ecs-deploy.yaml)
 
 This workflow deploys a Docker image to an AWS ECS service. It downloads the task definition, updates the container image, and deploys the new task definition to the specified ECS cluster and service.
 
@@ -25,7 +25,7 @@ jobs:
 
   deploy:
     needs: build
-    uses: significa/actions/.github/workflows/deploy-to-ecs.yaml@main
+    uses: significa/actions/.github/workflows/aws-ecs-deploy.yaml@main
     with:
       ecs_cluster_name: my-cluster-production
       ecs_service_name: my-service-production

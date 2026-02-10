@@ -40,7 +40,7 @@ jobs:
   deploy-to-ecs:
     name: Deploy to ECS Service
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6

@@ -1,6 +1,6 @@
 # Build and push ECR image
 
-[`.github/workflows/ecr-image.yaml`](../.github/workflows/ecr-image.yaml)
+[`.github/workflows/aws-ecr-image.yaml`](../.github/workflows/aws-ecr-image.yaml)
 
 This workflow builds a Docker image and pushes it to an AWS ECR private registry. It outputs the full image URI for use in downstream jobs (e.g., deploying to ECS).
 
@@ -16,14 +16,14 @@ on:
 
 jobs:
   build:
-    uses: significa/actions/.github/workflows/ecr-image.yaml@main
+    uses: significa/actions/.github/workflows/aws-ecr-image.yaml@main
     with:
       ecr_repository_name: my-app-staging
       aws_role_arn: ${{ vars.STAGING_AWS_DEPLOY_ROLE_ARN }}
 
   deploy:
     needs: build
-    uses: significa/actions/.github/workflows/deploy-to-ecs.yaml@main
+    uses: significa/actions/.github/workflows/aws-ecs-deploy.yaml@main
     with:
       ecs_cluster_name: my-cluster
       ecs_service_name: my-service
