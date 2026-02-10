@@ -1,0 +1,49 @@
+name: Update Release
+
+on:
+  workflow_call:
+    inputs:
+      application_name:
+        type: string
+        required: true
+        description: 'Application name and/or environment where the release was deployed'
+
+permissions:
+  contents: write
+
+jobs:
+  update-release:
+    name: Update Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Update release with deployment info
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const tag = '${{ github.ref_name }}';
+            const applicationName = '${{ inputs.application_name }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const now = new Date().toISOString();
+            const deploymentInfo = `\n\nDeployed ${applicationName} at ${now} - [View Action Run](${runUrl})`;
+
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag
+              });
+              
+              const newBody = (release.data.body || '') + deploymentInfo;
+              
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.data.id,
+                body: newBody
+              });
+              
+              console.log(`Updated release ${tag} with deployment info for ${environment}`);
+            } catch (error) {
+              console.log(`Release not found for tag ${tag}: ${error.message}`);
+            }
