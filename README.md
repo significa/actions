@@ -1,4 +1,4 @@
-# Shared GitHub actions workflows used by Significa
+# Shared GitHub actions workflows by Significa
 
 Reusable GitHub actions workflows for common CI/CD tasks.
 
