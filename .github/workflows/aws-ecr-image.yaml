@@ -91,7 +91,7 @@ jobs:
           echo "full_image=${full_image}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ inputs.dockerfile }}
