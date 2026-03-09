@@ -63,7 +63,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Get app version and image ref
         id: image
