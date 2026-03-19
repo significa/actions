@@ -48,6 +48,14 @@ on:
         required: false
         type: string
 
+      production_branch:
+        description: >-
+          The branch name for the production environment, defaults to null -
+          this way it uses the release deployment strategy.
+        required: false
+        default: null
+        type: string
+
       production_domain:
         description: Production domain (domain to be applied for the production releases).
         required: false
@@ -69,6 +77,12 @@ on:
         required: false
         type: string
         default: npm
+
+      git_fetch_depth:
+        description: The depth for git fetch operation, used in actions/checkout.
+        required: false
+        type: number
+        default: 1
 
     secrets:
       VERCEL_TOKEN:
@@ -148,7 +162,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TELEMETRY_DISABLED: 1
+      VERCEL_TELEMETRY_DISABLED: "1"
     permissions:
       deployments: write
       contents: read
@@ -169,7 +183,7 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ inputs.git_fetch_depth }}
 
       - uses: pnpm/action-setup@v4
         if: inputs.package_manager == 'pnpm'
@@ -197,7 +211,7 @@ jobs:
         shell: bash
         run: |
          if [[ "$IS_PRODUCTION" == "true" ]]; then
-          echo "Producton"
+          echo "Production"
           echo "environment=production" >> "$GITHUB_OUTPUT"
           echo "extra_options=--prod" >> "$GITHUB_OUTPUT"
          else
@@ -206,7 +220,7 @@ jobs:
           echo "extra_options=" >> "$GITHUB_OUTPUT"
          fi
         env:
-          IS_PRODUCTION: ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')}}
+          IS_PRODUCTION: ${{ ((github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')) || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == inputs.production_branch) }}
 
       - name: Deploy to Vercel
         id: vercel_deploy
@@ -240,16 +254,19 @@ jobs:
       # - name: Set deployment alias (production)
       #   if: |
       #     inputs.production_domain
-      #     && (
-      #       (
-      #         github.event_name == 'release'
-      #         && startsWith(github.event.release.name, 'v')
-      #         && startsWith(github.event.release.tag_name, 'v')
-      #       ) || (
-      #         github.event_name == 'workflow_dispatch'
-      #         && startsWith(github.ref_name, 'v')
-      #       )
+      #   && (
+      #     (
+      #       github.event_name == 'release'
+      #       && startsWith(github.event.release.name, 'v')
+      #       && startsWith(github.event.release.tag_name, 'v')
+      #     ) || (
+      #       github.event_name == 'workflow_dispatch'
+      #       && startsWith(github.ref_name, 'v')
+      #     ) || (
+      #       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      #       && github.ref_name == inputs.production_branch
       #     )
+      #   )
       #   run: |
       #     vercel_organization_slug=$(
       #       curl GET --silent \
@@ -265,7 +282,7 @@ jobs:
       #       --scope="$vercel_organization_slug" \
       #       --token="${{ secrets.VERCEL_TOKEN }}"
 
-      - name: Set deployment alias (preview)
+      - name: Set deployment alias (preview/staging)
         if: |
           inputs.staging_domain
           && github.ref_name == inputs.staging_branch
