@@ -39,7 +39,7 @@ on:
         description: "NPM scope (containing the '@' symbol, ex: @example)."
         type: string
         required: false
-        default: "@significa"
+        default: '@${{ github.repository_owner }}'
 
       install_registry_url:
         description: >-
@@ -68,6 +68,17 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-npm-library
   cancel-in-progress: false
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  ADBLOCK: 1
+  DISABLE_OPENCOLLECTIVE: 1
+  OPEN_SOURCE_CONTRIBUTOR: true
+  NPM_CONFIG_FUND: false
+  NEXT_TELEMETRY_DISABLED: 1
+  STORYBOOK_DISABLE_TELEMETRY: 1
+  PRISMA_HIDE_UPDATE_MESSAGE: 1
 
 jobs:
   get_node_versions:
@@ -102,7 +113,9 @@ jobs:
     needs:
       - get_node_versions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Custom checks when publishing
         if: inputs.publish_to_npm_registry || inputs.publish_to_github_registry
@@ -130,7 +143,7 @@ jobs:
             && exit 1 \
           )
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
@@ -155,9 +168,9 @@ jobs:
         node_version: ${{ fromJSON(needs.get_node_versions.outputs.active_versions) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node_version }}
           cache: npm
@@ -192,9 +205,9 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
           cache: npm
@@ -218,7 +231,9 @@ jobs:
           ${{ inputs.npm_scope }}:registry=https://npm.pkg.github.com/
           EOF
 
-          npm publish
+          npm publish --tag ${{ github.event.release.prerelease && 'prerelease' || 'latest' }}
+
+          rm -f ./.npmrc
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_npm_registry
@@ -228,4 +243,6 @@ jobs:
           ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
           EOF
 
-          npm publish
+          npm publish --tag ${{ github.event.release.prerelease && 'prerelease' || 'latest' }}
+
+          rm -f ./.npmrc

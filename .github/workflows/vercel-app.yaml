@@ -72,6 +72,18 @@ on:
         type: number
         default: 10
 
+      package_manager:
+        description: Package manager to use (npm, yarn, pnpm).
+        required: false
+        type: string
+        default: npm
+
+      git_fetch_depth:
+        description: The depth for git fetch operation, used in actions/checkout.
+        required: false
+        type: number
+        default: 1
+
     secrets:
       VERCEL_TOKEN:
         required: true
@@ -84,6 +96,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-vercel-app
   cancel-in-progress: false
 
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  ADBLOCK: 1
+  DISABLE_OPENCOLLECTIVE: 1
+  OPEN_SOURCE_CONTRIBUTOR: true
+  NPM_CONFIG_FUND: false
+  NEXT_TELEMETRY_DISABLED: 1
+  STORYBOOK_DISABLE_TELEMETRY: 1
+  PRISMA_HIDE_UPDATE_MESSAGE: 1
+
 jobs:
   test-and-lint:
     name: Test and lint
@@ -93,20 +116,29 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
       
       - name: Custom checks for configs
         run: |
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
+      # TODO: understand what was the reason behind deleting .npmrc
+      # This was needed at some point but I don't remember why.
+      # Maybe it contained auth tokens, references to env variables, or private registries?
       - name: Delete committed .npmrc
+        if: inputs.npm_scope || inputs.install_registry_url
         run: rm -f .npmrc
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
+        if: inputs.package_manager == 'pnpm'
+
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -149,15 +181,17 @@ jobs:
           >&2 echo "Releases must be tagged with a semver compliant string prefixed with 'v'. Ex: 'v1.2.3'"
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          # FIXME: make it configurable
+          fetch-depth: ${{ inputs.git_fetch_depth }}
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
+        if: inputs.package_manager == 'pnpm'
+
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -195,7 +229,7 @@ jobs:
         shell: bash
         run: |
           vercel pull --yes \
-            --environment= ${{ steps.vercel_opts.outputs.environment }} \
+            --environment=${{ steps.vercel_opts.outputs.environment }} \
             --token="${{ secrets.VERCEL_TOKEN }}"
 
           vercel build \
@@ -212,36 +246,41 @@ jobs:
             --name="${{ github.ref_name }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
-      - name: Set deployment alias (production)
-        if: |
-          inputs.production_domain
-          && (
-            (
-              github.event_name == 'release'
-              && startsWith(github.event.release.name, 'v')
-              && startsWith(github.event.release.tag_name, 'v')
-            ) || (
-              github.event_name == 'workflow_dispatch'
-              && startsWith(github.ref_name, 'v')
-            ) || (
-              (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-              && github.ref_name == inputs.production_branch
-            )
-          )
-        run: |
-          vercel_organization_slug=$(
-            curl GET --silent \
-              --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
-              --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
-              | jq -r '.slug'
-          )
-
-          echo "Setting the deployment alias (scope: $vercel_organization_slug)"
-          vercel alias set \
-            '${{ steps.vercel_deploy.outputs.preview_url }}' \
-            '${{ inputs.production_domain }}' \
-            --scope="$vercel_organization_slug" \
-            --token="${{ secrets.VERCEL_TOKEN }}"
+      # 
+      # Removed as Vercel no longer needs aliasing for production deployments
+      # (they are deploying directly as prod instead of becoming staged preview environment)
+      # TODO: Remove when we are sure this is no longer needed
+      # 
+      # - name: Set deployment alias (production)
+      #   if: |
+      #     inputs.production_domain
+      #   && (
+      #     (
+      #       github.event_name == 'release'
+      #       && startsWith(github.event.release.name, 'v')
+      #       && startsWith(github.event.release.tag_name, 'v')
+      #     ) || (
+      #       github.event_name == 'workflow_dispatch'
+      #       && startsWith(github.ref_name, 'v')
+      #     ) || (
+      #       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      #       && github.ref_name == inputs.production_branch
+      #     )
+      #   )
+      #   run: |
+      #     vercel_organization_slug=$(
+      #       curl GET --silent \
+      #         --url 'https://vercel.com/api/v2/teams/${{ secrets.VERCEL_ORG_ID }}' \
+      #         --header 'Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}' \
+      #         | jq -r '.slug'
+      #     )
+      #
+      #     echo "Setting the deployment alias (scope: $vercel_organization_slug)"
+      #     vercel alias set \
+      #       '${{ steps.vercel_deploy.outputs.preview_url }}' \
+      #       '${{ inputs.production_domain }}' \
+      #       --scope="$vercel_organization_slug" \
+      #       --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Set deployment alias (preview/staging)
         if: |
@@ -277,7 +316,7 @@ jobs:
             --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Create a GitHub deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         with:
           script: |

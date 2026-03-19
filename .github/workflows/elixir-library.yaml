@@ -18,6 +18,18 @@ on:
         required: false
         default: --warning-as-errors
         type: string
+      latest-elixir-version:
+        required: false
+        default: "1.18"
+        type: string
+      latest-otp-version:
+        required: false
+        default: "25.x"
+        type: string
+      latest-otp-os-version:
+        required: false
+        default: "ubuntu-24.04"
+        type: string
     secrets:
       HEX_API_KEY:
         required: true
@@ -25,49 +37,83 @@ on:
 jobs:
   test:
     name: Test
-    # Intentionally using `20.04` and not `22.04` because we need to support OTP `22 - 23`
-    runs-on: ubuntu-20.04
     timeout-minutes: 10
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
+        # Source of truth for the compatibility matrix:
+        #   https://hexdocs.pm/elixir/compatibility-and-deprecations.html
+        #   https://builds.hex.pm/builds/otp/ubuntu-24.04/builds.txt
         include:
-          - elixir-version: "1.14"
+         # Elixir 1.19 combinations
+          - elixir-version: "1.19"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.19"
+            otp-version: "27.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.19"
+            otp-version: "28.x"
+            os: "ubuntu-24.04"
+
+         # Elixir 1.18 combinations
+          - elixir-version: "1.18"
             otp-version: "25.x"
-          - elixir-version: "1.14"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.18"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.18"
+            otp-version: "27.x"
+            os: "ubuntu-24.04"
+
+          # Elixir 1.17 combinations
+          - elixir-version: "1.17"
+            otp-version: "25.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.17"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.17"
+            otp-version: "27.x"
+            os: "ubuntu-24.04"
+
+          # Elixir 1.16 combinations
+          - elixir-version: "1.16"
             otp-version: "24.x"
-          - elixir-version: "1.14"
-            otp-version: "23.x"
-          - elixir-version: "1.13"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.16"
+            otp-version: "25.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.16"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
+
+          # Elixir 1.15 combinations
+          - elixir-version: "1.15"
             otp-version: "24.x"
-          - elixir-version: "1.13"
-            otp-version: "23.x"
-          - elixir-version: "1.13"
-            otp-version: "22.x"
-          - elixir-version: "1.12"
-            otp-version: "24.x"
-          - elixir-version: "1.12"
-            otp-version: "23.x"
-          - elixir-version: "1.12"
-            otp-version: "22.x"
-          - elixir-version: "1.11"
-            otp-version: "23.x"
-          - elixir-version: "1.11"
-            otp-version: "22.x"
-          - elixir-version: "1.11"
-            otp-version: "21.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.15"
+            otp-version: "25.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.15"
+            otp-version: "26.x"
+            os: "ubuntu-24.04"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.23
         with:
           elixir-version: ${{ matrix.elixir-version }}
           otp-version: ${{ matrix.otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -82,16 +128,18 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.23
         with:
-          elixir-version: "1.14"
-          otp-version: "25.x"
+          elixir-version: ${{ inputs.latest-elixir-version }}
+          otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -103,19 +151,21 @@ jobs:
 
   build:
     name: Test build
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.latest-otp-os-version }}
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.23
         with:
-          elixir-version: "1.14"
-          otp-version: "25.x"
+          elixir-version: ${{ inputs.latest-elixir-version }}
+          otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -132,7 +182,7 @@ jobs:
   publish:
     name: Publish to Hex
     timeout-minutes: 5
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.latest-otp-os-version }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -143,22 +193,29 @@ jobs:
 
     if: |
       inputs.publish-to-hex
-      && github.event_name == 'release'
-      && !github.event.release.isDraft
-      && startsWith(github.event.release.name, 'v')
-      && startsWith(github.event.release.tag_name, 'v')
+      && (
+        github.event_name == 'release'
+        && !github.event.release.isDraft
+        && startsWith(github.event.release.name, 'v')
+        && startsWith(github.event.release.tag_name, 'v')
+      ) || (
+        github.event_name == 'push'
+        && github.ref_name == 'main'
+      )
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.18
+        uses: erlef/setup-beam@v1.23
         with:
-          elixir-version: "1.14"
-          otp-version: "25.x"
+          elixir-version: ${{ inputs.latest-elixir-version }}
+          otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -166,10 +223,18 @@ jobs:
 
       - run: mix deps.get
 
-      - name: Set version in mix.exs
-        if: inputs.replace-mix-version
+      - name: Tagging version in mix.exs for production release
+        if: inputs.replace-mix-version && github.event_name == 'release'
         run: |
           VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//')
+          echo "Setting version in mix.exs to ${VERSION}"
+          sed -i "s/0.0.1-development/${VERSION}/g" mix.exs
+
+      - name: Tagging version in mix.exs for main release candidate (main branch)
+        if: inputs.replace-mix-version && github.ref_name == 'main'
+        run: |
+          VERSION="0.0.1-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_attempt }}"
+          echo "Setting version in mix.exs to ${VERSION}"
           sed -i "s/0.0.1-development/${VERSION}/g" mix.exs
 
       - name: Publish

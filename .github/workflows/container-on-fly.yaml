@@ -31,7 +31,7 @@ on:
       lint_fly_config:
         description: If we should lint the fly.toml config.
         type: boolean
-        default: true
+        default: false
 
     secrets:
       FLY_API_TOKEN_STAGING:
@@ -39,31 +39,45 @@ on:
       FLY_API_TOKEN_PRODUCTION:
         required: false
 
-concurrency:
-  group: ${{ github.workflow_ref }}
-  cancel-in-progress: false
-
 jobs:
   lint-fly-config:
-    name: Lint Fly config
-    if: inputs.lint_fly_config
+    name: Lint fly.toml
     runs-on: ubuntu-latest
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: inputs.lint_fly_config
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        if: inputs.lint_fly_config
+        with:
+          fetch-depth: 1
 
-      - run: flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
+      - name: "Lint fly config ${{ inputs.staging_fly_config_path }}"
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "Error: FLY_API_TOKEN is not set, skipping"
+            exit 0
+          fi
+
+          flyctl config validate --config "${{ inputs.staging_fly_config_path }}"
+        if: inputs.lint_fly_config && inputs.staging_fly_config_path
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
 
-      - run: flyctl config validate --config "${{ inputs.production_fly_config_path }}"
-        if: inputs.staging_fly_config_path != inputs.production_fly_config_path
+      - name: "Lint fly config ${{ inputs.production_fly_config_path }}"
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "Error: FLY_API_TOKEN is not set, skipping"
+            exit 0
+          fi
+
+          flyctl config validate --config "${{ inputs.production_fly_config_path }}"
+        if: inputs.lint_fly_config && inputs.production_fly_config_path && inputs.staging_fly_config_path != inputs.production_fly_config_path
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
 
   build-and-deploy:
-    name: Fly deploy
+    name: Deploy
     needs:
       - lint-fly-config
     if: |
@@ -74,9 +88,11 @@ jobs:
       ) && github.ref_name == inputs.staging_branch
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-fly-deploy-${{ github.ref_name }}
+      group: ${{ github.workflow }}-fly-deploy-${{ github.ref_name }}-${{ inputs.staging_fly_config_path }}-${{ inputs.production_fly_config_path }}-${{ inputs.staging_app_name }}-${{ inputs.production_app_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+            fetch-depth: 1
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
@@ -89,7 +105,7 @@ jobs:
           flyctl deploy \
             --config ${{ inputs.staging_fly_config_path }} \
             --remote-only \
-            --build-arg APP_VERSION="0.0.1-staging-${{ github.sha }}"
+            --build-arg APP_VERSION="0.0.1-${{ github.ref_name }}-${{ github.sha }}"
 
       - name: Deploy to production
         if: github.event_name == 'release'
