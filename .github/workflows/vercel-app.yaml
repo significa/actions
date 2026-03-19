@@ -64,6 +64,12 @@ on:
         type: number
         default: 10
 
+      package_manager:
+        description: Package manager to use (npm, yarn, pnpm).
+        required: false
+        type: string
+        default: npm
+
     secrets:
       VERCEL_TOKEN:
         required: true
@@ -105,17 +111,20 @@ jobs:
           [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
 
-      # TODO: understand wht was the reason behind deleting .npmrc
+      # TODO: understand what was the reason behind deleting .npmrc
       # This was needed at some point but I don't remember why.
       # Maybe it contained auth tokens, references to env variables, or private registries?
-      - name: Delete commited .npmrc
+      - name: Delete committed .npmrc
         if: inputs.npm_scope || inputs.install_registry_url
         run: rm -f .npmrc
+
+      - uses: pnpm/action-setup@v4
+        if: inputs.package_manager == 'pnpm'
 
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -162,10 +171,13 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: pnpm/action-setup@v4
+        if: inputs.package_manager == 'pnpm'
+
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
