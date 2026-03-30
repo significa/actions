@@ -28,6 +28,18 @@ on:
         type: string
         default: fly.toml
 
+      staging_deploy_args:
+        description: Extra flags appended to the staging flyctl deploy command (e.g. --build-arg KEY=VALUE)
+        type: string
+        required: false
+        default: ''
+
+      production_deploy_args:
+        description: Extra flags appended to the production flyctl deploy command (e.g. --build-arg KEY=VALUE)
+        type: string
+        required: false
+        default: ''
+
       lint_fly_config:
         description: If we should lint the fly.toml config.
         type: boolean
@@ -105,7 +117,8 @@ jobs:
           flyctl deploy \
             --config ${{ inputs.staging_fly_config_path }} \
             --remote-only \
-            --build-arg APP_VERSION="0.0.1-${{ github.ref_name }}-${{ github.sha }}"
+            --build-arg APP_VERSION="0.0.1-${{ github.ref_name }}-${{ github.sha }}" \
+            ${{ inputs.staging_deploy_args }}
 
       - name: Deploy to production
         if: github.event_name == 'release'
@@ -116,4 +129,5 @@ jobs:
           flyctl deploy \
             --config ${{ inputs.production_fly_config_path }} \
             --remote-only \
-            --build-arg APP_VERSION="${{ github.ref_name }}"
+            --build-arg APP_VERSION="${{ github.ref_name }}" \
+            ${{ inputs.production_deploy_args }}
