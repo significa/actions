@@ -107,7 +107,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.23
+        uses: erlef/setup-beam@v1.24
         with:
           elixir-version: ${{ matrix.elixir-version }}
           otp-version: ${{ matrix.otp-version }}
@@ -133,7 +133,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.23
+        uses: erlef/setup-beam@v1.24
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
@@ -159,7 +159,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.23
+        uses: erlef/setup-beam@v1.24
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
@@ -209,7 +209,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Elixir
-        uses: erlef/setup-beam@v1.23
+        uses: erlef/setup-beam@v1.24
         with:
           elixir-version: ${{ inputs.latest-elixir-version }}
           otp-version: ${{ inputs.latest-otp-version }}
