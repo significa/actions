@@ -316,7 +316,7 @@ jobs:
             --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Create a GitHub deployment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: github.event_name == 'pull_request'
         with:
           script: |
