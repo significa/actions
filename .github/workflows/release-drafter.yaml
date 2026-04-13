@@ -24,7 +24,7 @@ jobs:
 
       - name: Get latest tag and calculate next version
         id: version
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const bumpType = '${{ inputs.bump_type }}';
@@ -93,7 +93,7 @@ jobs:
           git push origin "${{ steps.version.outputs.next_version }}"
 
       - name: Create draft release with generated notes
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const nextVersion = '${{ steps.version.outputs.next_version }}';

@@ -18,7 +18,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Update release with deployment info
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const tag = '${{ github.ref_name }}';
