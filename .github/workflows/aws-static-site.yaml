@@ -70,7 +70,7 @@ jobs:
           fetch-depth: 1
           lfs: true
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
