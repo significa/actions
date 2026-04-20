@@ -132,7 +132,7 @@ jobs:
         if: inputs.npm_scope || inputs.install_registry_url
         run: rm -f .npmrc
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
       - uses: actions/setup-node@v6
@@ -185,7 +185,7 @@ jobs:
         with:
           fetch-depth: ${{ inputs.git_fetch_depth }}
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
       - uses: actions/setup-node@v6
