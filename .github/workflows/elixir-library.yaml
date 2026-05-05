@@ -20,11 +20,11 @@ on:
         type: string
       latest-elixir-version:
         required: false
-        default: "1.18"
+        default: "1.19"
         type: string
       latest-otp-version:
         required: false
-        default: "25.x"
+        default: "28.x"
         type: string
       latest-otp-os-version:
         required: false
@@ -45,6 +45,7 @@ jobs:
         # Source of truth for the compatibility matrix:
         #   https://hexdocs.pm/elixir/compatibility-and-deprecations.html
         #   https://builds.hex.pm/builds/otp/ubuntu-24.04/builds.txt
+        #  Don't forget to update `latest-elixir-version` and `latest-otp-version` inputs above.
         include:
          # Elixir 1.19 combinations
           - elixir-version: "1.19"
