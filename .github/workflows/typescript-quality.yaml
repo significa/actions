@@ -1,0 +1,109 @@
+name: TypeScript quality
+
+on:
+  workflow_call:
+    inputs:
+      install_command:
+        description: Install command.
+        type: string
+        required: false
+        default: pnpm install --frozen-lockfile
+
+      biome_command:
+        description: Biome check command (CI-optimized output, no auto-fix).
+        type: string
+        required: false
+        default: pnpm exec biome ci .
+
+      typecheck_command:
+        description: TypeScript check command.
+        type: string
+        required: false
+        default: pnpm typecheck
+
+      knip_command:
+        description: Knip command (dead code / unused dependency detection).
+        type: string
+        required: false
+        default: pnpm knip --no-progress
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-typescript-quality
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  ADBLOCK: 1
+  DISABLE_OPENCOLLECTIVE: 1
+  OPEN_SOURCE_CONTRIBUTOR: true
+  NPM_CONFIG_FUND: false
+  NEXT_TELEMETRY_DISABLED: 1
+  STORYBOOK_DISABLE_TELEMETRY: 1
+  PRISMA_HIDE_UPDATE_MESSAGE: 1
+  # Make mise pick up .nvmrc / .node-version in CI (off by default in mise).
+  MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS: node
+
+jobs:
+  biome:
+    name: Biome
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: jdx/mise-action@v2
+
+      - uses: pnpm/action-setup@v5
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Biome
+        run: ${{ inputs.biome_command }}
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: jdx/mise-action@v2
+
+      - uses: pnpm/action-setup@v5
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Typecheck
+        run: ${{ inputs.typecheck_command }}
+
+  knip:
+    name: Knip
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: jdx/mise-action@v2
+
+      - uses: pnpm/action-setup@v5
+
+      - name: Install dependencies
+        run: ${{ inputs.install_command }}
+
+      - name: Knip
+        run: ${{ inputs.knip_command }}
