@@ -13,6 +13,7 @@ Significa's reusable GitHub actions workflows.
 | [Test and publish NPM library](docs/npm-library.md) | Build, test, and publish NPM packages |
 | [Test and publish Python package](docs/python-package.md) | Test and publish Python packages to PyPI |
 | [Release Drafter](docs/release-drafter.md) | Create draft releases with auto-generated release notes |
+| [Secret scan](docs/secret-scan.md) | Detect committed secrets with gitleaks (any language) |
 | [TypeScript quality](docs/typescript-quality.md) | Run Biome, tsc, and Knip in parallel for TypeScript projects |
 | [Update Release](docs/update-release.md) | Update releases with deployment information |
 | [Build and deploy a Vercel app](docs/vercel-app.md) | Build, test, and deploy applications to Vercel |
