@@ -49,7 +49,7 @@ jobs:
 
 - **Biome** — formatting + linting (`biome ci`: no auto-fix, GitHub annotations)
 - **Typecheck** — `tsc --noEmit` against the project's `tsconfig.json` strict flags
-- **Knip** — unused exports, files, and dependencies
+- **Dead code & unused dependencies** (Knip) — unused exports, files, and npm dependencies
 
 Jobs run in parallel so failures surface independently — a Biome miss doesn't block discovery of typecheck or knip issues.
 

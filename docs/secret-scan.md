@@ -19,9 +19,7 @@ jobs:
     uses: significa/actions/.github/workflows/secret-scan.yaml@main
 ```
 
-## Inputs
-
-- `gitleaks_version` — defaults to `8.21.2`. Override per-project if you need a specific version.
+No inputs. Gitleaks is always installed from its latest GitHub release — secret-detection patterns evolve quickly, and the cost of a broken release is just one CI failure to investigate.
 
 ## What happens on detection
 
