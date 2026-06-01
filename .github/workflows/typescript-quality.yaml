@@ -58,7 +58,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -79,7 +79,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -100,7 +100,7 @@ jobs:
 
       - uses: jdx/mise-action@v2
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
