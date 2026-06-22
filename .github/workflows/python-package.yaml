@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.lint_command
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -79,7 +79,7 @@ jobs:
     needs:
       - lint
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 

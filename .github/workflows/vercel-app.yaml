@@ -116,7 +116,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
       
@@ -181,7 +181,7 @@ jobs:
           >&2 echo "Releases must be tagged with a semver compliant string prefixed with 'v'. Ex: 'v1.2.3'"
           exit 1
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: ${{ inputs.git_fetch_depth }}
 
