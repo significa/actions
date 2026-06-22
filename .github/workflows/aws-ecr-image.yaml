@@ -58,7 +58,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
           AWS_REGION: ${{ inputs.aws_region }}
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
