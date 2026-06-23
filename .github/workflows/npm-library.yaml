@@ -11,6 +11,12 @@ on:
         required: false
         default: null
 
+      package_manager:
+        description: Package manager to use (npm, yarn, pnpm). Drives the setup-node cache.
+        type: string
+        required: false
+        default: npm
+
       install_command:
         description: Install command.
         type: string
@@ -143,10 +149,13 @@ jobs:
             && exit 1 \
           )
 
+      - uses: pnpm/action-setup@v6
+        if: inputs.package_manager == 'pnpm'
+
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -170,10 +179,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: pnpm/action-setup@v6
+        if: inputs.package_manager == 'pnpm'
+
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node_version }}
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
@@ -207,10 +219,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: pnpm/action-setup@v6
+        if: inputs.package_manager == 'pnpm'
+
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get_node_versions.outputs.latest_version }}
-          cache: npm
+          cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 

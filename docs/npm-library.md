@@ -19,6 +19,7 @@ test-and-publish:
 ## Inputs
 
 - `node_versions`
+- `package_manager` (npm, yarn, pnpm — defaults to `npm`; drives the setup-node cache)
 - `install_command`
 - `lint_command`
 - `build_command`
