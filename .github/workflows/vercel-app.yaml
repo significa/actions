@@ -14,7 +14,7 @@ on:
         type: string
         required: false
         default: npm run lint
-      
+
       test_command:
         description: Test command.
         type: string
@@ -106,6 +106,7 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
   STORYBOOK_DISABLE_TELEMETRY: 1
   PRISMA_HIDE_UPDATE_MESSAGE: 1
+  MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS: node
 
 jobs:
   test-and-lint:
@@ -119,25 +120,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 1
-      
+
       - name: Custom checks for configs
         run: |
-          [ -f "./.nvmrc" ] || (echo "Required .nvmrc file does not exist" >&2 && echo 1)
           [ -f "./vercel.json" ] || (echo "Required vercel.json file does not exist" >&2 && echo 1)
-
-      # TODO: understand what was the reason behind deleting .npmrc
-      # This was needed at some point but I don't remember why.
-      # Maybe it contained auth tokens, references to env variables, or private registries?
-      - name: Delete committed .npmrc
-        if: inputs.npm_scope || inputs.install_registry_url
-        run: rm -f .npmrc
 
       - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
+      - uses: jdx/mise-action@v4
+
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
           cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
@@ -154,7 +148,7 @@ jobs:
       - name: Test
         if: inputs.test_command
         run: ${{ inputs.test_command }}
-  
+
   build-and-deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
@@ -188,16 +182,17 @@ jobs:
       - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
+      - uses: jdx/mise-action@v4
+
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
           cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
-      
+
       - name: Set package.json version
         if: (! startsWith(github.ref_name, 'v'))
         run: npm version --no-git-tag-version "v0.0.1-${{ github.sha }}"
@@ -210,15 +205,15 @@ jobs:
         id: vercel_opts
         shell: bash
         run: |
-         if [[ "$IS_PRODUCTION" == "true" ]]; then
-          echo "Production"
-          echo "environment=production" >> "$GITHUB_OUTPUT"
-          echo "extra_options=--prod" >> "$GITHUB_OUTPUT"
-         else
-          echo "preview"
-          echo "environment=preview" >> "$GITHUB_OUTPUT"
-          echo "extra_options=" >> "$GITHUB_OUTPUT"
-         fi
+          if [[ "$IS_PRODUCTION" == "true" ]]; then
+           echo "Production"
+           echo "environment=production" >> "$GITHUB_OUTPUT"
+           echo "extra_options=--prod" >> "$GITHUB_OUTPUT"
+          else
+           echo "preview"
+           echo "environment=preview" >> "$GITHUB_OUTPUT"
+           echo "extra_options=" >> "$GITHUB_OUTPUT"
+          fi
         env:
           IS_PRODUCTION: ${{ ((github.event_name == 'release' || github.event_name == 'workflow_dispatch') && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')) || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == inputs.production_branch) }}
 
@@ -246,11 +241,11 @@ jobs:
             --name="${{ github.ref_name }}" \
           | tee >(tail -1 | sed -e 's/^/preview_url=/;' >> "$GITHUB_OUTPUT")
 
-      # 
+      #
       # Removed as Vercel no longer needs aliasing for production deployments
       # (they are deploying directly as prod instead of becoming staged preview environment)
       # TODO: Remove when we are sure this is no longer needed
-      # 
+      #
       # - name: Set deployment alias (production)
       #   if: |
       #     inputs.production_domain
