@@ -114,7 +114,7 @@ jobs:
           otp-version: ${{ matrix.otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -140,7 +140,7 @@ jobs:
           otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -166,7 +166,7 @@ jobs:
           otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -216,7 +216,7 @@ jobs:
           otp-version: ${{ inputs.latest-otp-version }}
 
       - name: Restore dependencies cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
