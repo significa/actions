@@ -54,7 +54,18 @@ on:
         required: false
         default: "https://registry.npmjs.org/"
         type: string
-      
+
+      authenticate_github_registry:
+        description: >-
+          Authenticate the install steps against the GitHub npm registry
+          (npm.pkg.github.com) with GITHUB_TOKEN, so private scoped
+          dependencies published to GitHub Packages can be fetched. The
+          depended-on package(s) must grant this repository read access, and
+          the calling job must grant 'packages: read'.
+        required: false
+        default: false
+        type: boolean
+
       publish_to_github_registry:
         description: True to publish the GitHub NPM registry.
         required: false
@@ -159,6 +170,10 @@ jobs:
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
 
+      - name: Authenticate GitHub npm registry
+        if: inputs.authenticate_github_registry
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ./.npmrc
+
       - name: Install dependencies
         run: ${{ inputs.install_command }}
 
@@ -188,6 +203,10 @@ jobs:
           cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Authenticate GitHub npm registry
+        if: inputs.authenticate_github_registry
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ./.npmrc
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
@@ -228,6 +247,10 @@ jobs:
           cache: ${{ inputs.package_manager }}
           scope: ${{ inputs.npm_scope }}
           registry-url: ${{ inputs.install_registry_url }}
+
+      - name: Authenticate GitHub npm registry
+        if: inputs.authenticate_github_registry
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ./.npmrc
 
       - name: Install dependencies
         run: ${{ inputs.install_command }}
