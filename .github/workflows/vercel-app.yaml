@@ -128,7 +128,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v4.2.3
 
       - uses: actions/setup-node@v7
         with:
@@ -182,7 +182,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         if: inputs.package_manager == 'pnpm'
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v4.2.3
 
       - uses: actions/setup-node@v7
         with:

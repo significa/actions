@@ -68,7 +68,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v4.2.3
 
       - uses: pnpm/action-setup@v6
 
@@ -94,7 +94,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v4.2.3
 
       - uses: pnpm/action-setup@v6
 
@@ -120,7 +120,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v4.2.3
 
       - uses: pnpm/action-setup@v6
 
