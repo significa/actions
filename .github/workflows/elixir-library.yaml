@@ -45,12 +45,21 @@ jobs:
         # Source of truth for the compatibility matrix:
         #   https://hexdocs.pm/elixir/compatibility-and-deprecations.html
         #   https://builds.hex.pm/builds/otp/ubuntu-24.04/builds.txt
+        #   https://www.erlang.org/versions
         #  Don't forget to update `latest-elixir-version` and `latest-otp-version` inputs above.
         include:
-         # Elixir 1.19 combinations
-          - elixir-version: "1.19"
-            otp-version: "26.x"
+         # Elixir 1.20 combinations
+          - elixir-version: "1.20"
+            otp-version: "27.x"
             os: "ubuntu-24.04"
+          - elixir-version: "1.20"
+            otp-version: "28.x"
+            os: "ubuntu-24.04"
+          - elixir-version: "1.20"
+            otp-version: "29.x"
+            os: "ubuntu-24.04"
+            
+         # Elixir 1.19 combinations
           - elixir-version: "1.19"
             otp-version: "27.x"
             os: "ubuntu-24.04"
@@ -60,46 +69,12 @@ jobs:
 
          # Elixir 1.18 combinations
           - elixir-version: "1.18"
-            otp-version: "25.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.18"
-            otp-version: "26.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.18"
             otp-version: "27.x"
             os: "ubuntu-24.04"
 
           # Elixir 1.17 combinations
           - elixir-version: "1.17"
-            otp-version: "25.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.17"
-            otp-version: "26.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.17"
             otp-version: "27.x"
-            os: "ubuntu-24.04"
-
-          # Elixir 1.16 combinations
-          - elixir-version: "1.16"
-            otp-version: "24.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.16"
-            otp-version: "25.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.16"
-            otp-version: "26.x"
-            os: "ubuntu-24.04"
-
-          # Elixir 1.15 combinations
-          - elixir-version: "1.15"
-            otp-version: "24.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.15"
-            otp-version: "25.x"
-            os: "ubuntu-24.04"
-          - elixir-version: "1.15"
-            otp-version: "26.x"
             os: "ubuntu-24.04"
 
     steps:
