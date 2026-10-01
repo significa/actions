@@ -32,6 +32,8 @@ ci-cd:
 - `npm_scope`
 - `install_registry_url`
 - `ref_name_to_vercel_environment`
+- `job_timeout_minutes` (optional, defaults to `10`) — maximum execution time, in minutes, for each
+  job in this workflow. Raise it if your install, test or build steps regularly take longer.
 
 ## Secrets
 

@@ -43,6 +43,8 @@ jobs:
 - `staging_app_name`
 - `production_app_name`
 - `staging_branch`
+- `job_timeout_minutes` (optional, defaults to `8`) — maximum execution time, in minutes, for each
+  job in this workflow. Raise it if your image build and deploy regularly take longer.
 
 ## Secrets
 
