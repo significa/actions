@@ -45,6 +45,12 @@ on:
         type: boolean
         default: false
 
+      job_timeout_minutes:
+        description: Job maximum execution time in minutes.
+        required: false
+        type: number
+        default: 8
+
     secrets:
       FLY_API_TOKEN_STAGING:
         required: false
@@ -58,6 +64,7 @@ jobs:
   lint-fly-config:
     name: Lint fly.toml
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.job_timeout_minutes }}
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
         if: inputs.lint_fly_config
@@ -102,6 +109,7 @@ jobs:
         github.event_name == 'workflow_dispatch'
       ) && github.ref_name == inputs.staging_branch
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.job_timeout_minutes }}
     concurrency:
       group: ${{ github.workflow }}-fly-deploy-${{ github.ref_name }}-${{ inputs.staging_fly_config_path }}-${{ inputs.production_fly_config_path }}-${{ inputs.staging_app_name }}-${{ inputs.production_app_name }}
     steps:
