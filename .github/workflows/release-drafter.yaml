@@ -3,8 +3,14 @@ name: Release Creator
 on:
   workflow_call:
     inputs:
-      bump_type:
+      versioning:
+        description: 'Versioning scheme: `semver` (v1.2.3) or `single` (v1, v2, v3)'
         type: string
+        default: 'semver'
+      bump_type:
+        description: 'Version bump type for semver: `patch`, `minor` or `major`. Ignored for `single`'
+        type: string
+        default: 'patch'
       publish_release:
         type: boolean
         default: false
@@ -27,59 +33,87 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
+            const versioning = '${{ inputs.versioning }}';
             const bumpType = '${{ inputs.bump_type }}';
-            
+
+            if (!['semver', 'single'].includes(versioning)) {
+              core.setFailed(`Invalid versioning "${versioning}". Use "semver" or "single".`);
+              return;
+            }
+
             // Get all tags
-            const { data: tags } = await github.rest.repos.listTags({
+            const tags = await github.paginate(github.rest.repos.listTags, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               per_page: 100,
             });
-            
-            // Find the latest semver tag
-            const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
-            let latestVersion = { major: 0, minor: 0, patch: 0 };
+
+            let nextVersion;
             let latestTag = null;
-            
-            for (const tag of tags) {
-              const match = tag.name.match(semverRegex);
-              if (match) {
-                const version = {
-                  major: parseInt(match[1], 10),
-                  minor: parseInt(match[2], 10),
-                  patch: parseInt(match[3], 10),
-                };
-                
-                // Compare versions
-                if (
-                  version.major > latestVersion.major ||
-                  (version.major === latestVersion.major && version.minor > latestVersion.minor) ||
-                  (version.major === latestVersion.major && version.minor === latestVersion.minor && version.patch > latestVersion.patch)
-                ) {
-                  latestVersion = version;
-                  latestTag = tag.name;
+
+            if (versioning === 'single') {
+              // Find the highest single number tag (v1, v2, ...). Semver tags count by
+              // their major, so switching an existing project to `single` keeps going up.
+              const singleRegex = /^v?(\d+)(?:\.\d+\.\d+)?$/;
+              let latest = 0;
+
+              for (const tag of tags) {
+                const match = tag.name.match(singleRegex);
+                if (match) {
+                  const version = parseInt(match[1], 10);
+                  if (version > latest) {
+                    latest = version;
+                    latestTag = tag.name;
+                  }
                 }
               }
+
+              console.log(`Latest tag: ${latestTag || 'none'}`);
+              nextVersion = `v${latest + 1}`;
+            } else {
+              // Find the latest semver tag
+              const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
+              let latestVersion = { major: 0, minor: 0, patch: 0 };
+
+              for (const tag of tags) {
+                const match = tag.name.match(semverRegex);
+                if (match) {
+                  const version = {
+                    major: parseInt(match[1], 10),
+                    minor: parseInt(match[2], 10),
+                    patch: parseInt(match[3], 10),
+                  };
+
+                  // Compare versions
+                  if (
+                    version.major > latestVersion.major ||
+                    (version.major === latestVersion.major && version.minor > latestVersion.minor) ||
+                    (version.major === latestVersion.major && version.minor === latestVersion.minor && version.patch > latestVersion.patch)
+                  ) {
+                    latestVersion = version;
+                    latestTag = tag.name;
+                  }
+                }
+              }
+
+              console.log(`Latest tag: ${latestTag || 'none'}`);
+              console.log(`Latest version: v${latestVersion.major}.${latestVersion.minor}.${latestVersion.patch}`);
+
+              // Calculate next version based on bump type
+              switch (bumpType) {
+                case 'major':
+                  nextVersion = `v${latestVersion.major + 1}.0.0`;
+                  break;
+                case 'minor':
+                  nextVersion = `v${latestVersion.major}.${latestVersion.minor + 1}.0`;
+                  break;
+                case 'patch':
+                default:
+                  nextVersion = `v${latestVersion.major}.${latestVersion.minor}.${latestVersion.patch + 1}`;
+                  break;
+              }
             }
-            
-            console.log(`Latest tag: ${latestTag || 'none'}`);
-            console.log(`Latest version: v${latestVersion.major}.${latestVersion.minor}.${latestVersion.patch}`);
-            
-            // Calculate next version based on bump type
-            let nextVersion;
-            switch (bumpType) {
-              case 'major':
-                nextVersion = `v${latestVersion.major + 1}.0.0`;
-                break;
-              case 'minor':
-                nextVersion = `v${latestVersion.major}.${latestVersion.minor + 1}.0`;
-                break;
-              case 'patch':
-              default:
-                nextVersion = `v${latestVersion.major}.${latestVersion.minor}.${latestVersion.patch + 1}`;
-                break;
-            }
-            
+
             console.log(`Next version: ${nextVersion}`);
             
             core.setOutput('next_version', nextVersion);
