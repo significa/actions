@@ -64,6 +64,7 @@ deploy:
 | `build_command` | Command to build the static site | Yes | - |
 | `dist_path` | Path to the built static files directory | Yes | - |
 | `install_command` | Command to install dependencies | No | `pnpm install --frozen-lockfile` |
+| `node_version_file` | File to read the Node.js version from (e.g., `mise.toml`, `.nvmrc`, `.node-version`, `package.json`) | No | `mise.toml` |
 | `npm_scope` | NPM scope for GitHub packages registry | No | `''` |
 | `aws_region` | AWS region for deployment | No | `eu-south-2` |
 | `use_turbo_cache` | Enable Turbo cache | No | `false` |

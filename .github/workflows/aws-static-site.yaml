@@ -15,6 +15,10 @@ on:
         description: 'Path to the built static files directory'
         type: string
         required: true
+      node_version_file:
+        description: 'File to read the Node.js version from (e.g., mise.toml, .nvmrc, .node-version, package.json)'
+        type: string
+        default: 'mise.toml'
       npm_scope:
         description: 'NPM scope for GitHub packages registry (e.g., @significa)'
         type: string
@@ -75,7 +79,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ${{ inputs.node_version_file }}
           cache: 'pnpm'
           scope: ${{ inputs.npm_scope }}
           registry-url: 'https://npm.pkg.github.com'
