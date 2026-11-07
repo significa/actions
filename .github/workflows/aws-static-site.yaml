@@ -31,6 +31,10 @@ on:
         description: 'Enable Turbo cache'
         type: boolean
         default: false
+      assets_cache_control:
+        description: 'Cache-Control header for all files except index.html'
+        type: string
+        default: 'public, max-age=31536000, immutable'
     secrets:
       AWS_DEPLOY_ROLE_ARN:
         description: 'AWS IAM role ARN for authentication'
@@ -121,12 +125,12 @@ jobs:
 
       - name: Deploy static assets to S3
         run: |
-          echo "Copying all files except index.html with immutable cache headers"
+          echo "Copying all files except index.html with cache headers: $ASSETS_CACHE_CONTROL"
           aws s3 cp \
             --no-progress \
             --recursive \
             --exclude "index.html" \
-            --cache-control "public, max-age=31536000, immutable" \
+            --cache-control "$ASSETS_CACHE_CONTROL" \
             "${{ inputs.dist_path }}" "${{ secrets.AWS_S3_BUCKET_URI }}"
 
           echo "Copying index.html with no-cache headers"
@@ -134,6 +138,8 @@ jobs:
             --no-progress \
             --cache-control "no-cache, no-store, must-revalidate" \
             "${{ inputs.dist_path }}/index.html" "${{ secrets.AWS_S3_BUCKET_URI }}/index.html"
+        env:
+          ASSETS_CACHE_CONTROL: ${{ inputs.assets_cache_control }}
 
       - name: Invalidate CloudFront cache
         run: |

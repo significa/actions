@@ -68,6 +68,7 @@ deploy:
 | `npm_scope` | NPM scope for GitHub packages registry | No | `''` |
 | `aws_region` | AWS region for deployment | No | `eu-south-2` |
 | `use_turbo_cache` | Enable Turbo cache | No | `false` |
+| `assets_cache_control` | Cache-Control header for all files except `index.html` | No | `public, max-age=31536000, immutable` |
 
 ## Secrets
 
@@ -92,7 +93,14 @@ permissions:
 
 The workflow uses an optimized caching strategy:
 
-- **Static assets** (JS, CSS, images, etc.): `public, max-age=31536000, immutable` (1 year)
+- **Static assets** (JS, CSS, images, etc.): `public, max-age=31536000, immutable` (1 year) by default, configurable via `assets_cache_control`
 - **index.html**: `no-cache, no-store, must-revalidate` (always fetched fresh)
 
 This ensures users always get the latest version while benefiting from long-term caching for hashed assets.
+
+If your build emits files without content hashes (e.g. multi-page sites with other `.html` files), use a shorter cache:
+
+```yaml
+with:
+  assets_cache_control: 'public, max-age=3600'
+```
