@@ -232,9 +232,8 @@ jobs:
       && github.event_name == 'release'
       && startsWith(github.event.release.name, 'v')
       && startsWith(github.event.release.tag_name, 'v')
-    permissions:
-      contents: read
-      packages: write
+    # No permissions block: a called job requesting more than the caller grants (e.g. id-token)
+    # fails the whole run, so inherit the caller's grant instead.
     steps:
       - uses: actions/checkout@v7
 
@@ -275,11 +274,17 @@ jobs:
 
       - name: Publish to the NPM registry
         if: inputs.publish_to_npm_registry
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          cat > ./.npmrc <<EOF
-          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          ${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/
-          EOF
+          echo "${{ inputs.npm_scope }}:registry=https://registry.npmjs.org/" > ./.npmrc
+
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ./.npmrc
+          else
+            # Trusted publishing (OIDC) needs npm >= 11.5.1; Node 22 still bundles npm 10.
+            npm install -g npm@^11.5.1
+          fi
 
           npm publish --tag ${{ github.event.release.prerelease && 'prerelease' || 'latest' }}
 

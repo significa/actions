@@ -31,7 +31,7 @@ test-and-publish:
 
 ## Secrets
 
-- `NPM_TOKEN`
+- `NPM_TOKEN` (optional, see below)
 
 ## Publishing to NPM
 
@@ -47,3 +47,34 @@ If publishing to NPM `publish_to_npm_registry`, make sure that:
   }
   ```
 - `publishConfig` does not define a registry override for your scope.
+
+### Trusted publishing
+
+Without an `NPM_TOKEN` secret, the workflow publishes with
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC),
+and npm adds provenance automatically. To set it up:
+
+1. On npmjs.com, open the package settings and add a GitHub Actions trusted
+   publisher with your repository and the filename of **your** workflow (the
+   one that calls this action, e.g. `ci-cd.yaml`), not `npm-library.yaml`.
+2. Grant `id-token: write` in the calling job:
+   ```yaml
+   test-and-publish:
+     name: Test and publish
+     uses: significa/actions/.github/workflows/npm-library.yaml@main
+     permissions:
+       contents: read
+       packages: write
+       id-token: write
+     with:
+       publish_to_npm_registry: true
+   ```
+3. Stop passing `NPM_TOKEN`. If it is still passed, npm uses it as a fallback
+   when OIDC is not available.
+
+The `repository` field in `package.json` must point to the same GitHub
+repository.
+
+The publish job runs with the permissions the calling job grants, so grant
+only what it needs: `contents: read`, `packages: write` (GitHub registry) and
+`id-token: write` (trusted publishing).
