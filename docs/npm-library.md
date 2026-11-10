@@ -74,3 +74,7 @@ and npm adds provenance automatically. To set it up:
 
 The `repository` field in `package.json` must point to the same GitHub
 repository.
+
+The publish job runs with the permissions the calling job grants, so grant
+only what it needs: `contents: read`, `packages: write` (GitHub registry) and
+`id-token: write` (trusted publishing).
